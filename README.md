@@ -116,3 +116,11 @@ npx firebase-tools deploy --only firestore,storage --project renovax-5fbf0
 El archivo `storage.rules` restringe el espacio futuro `users/{uid}/captures/*` a su propietario, y acepta únicamente archivos de imagen menores a 10 MB. No existe carga automática de fotografías ni grabaciones. Después de publicar las reglas, iniciar sesión en Configuración y verificar el acceso a Firestore en un dispositivo real.
 
 La PWA ahora solicita el HTML primero a la red y usa la copia local **solo cuando no hay conexión**. Las versiones nuevas toman el control automáticamente y recargan la interfaz; los recursos estáticos versionados permanecen en caché para uso sin conexión.
+
+## Cartografía geoespacial — conexión operativa
+
+Las vistas **Centro de control**, **Ríos y laderas**, **Actividad sísmica**, **Transporte y GPS** y **Seguridad** muestran mapas de Nicaragua con Leaflet y fuentes Carto, OpenStreetMap o Esri World Imagery (atribuciones visibles). Los mapas requieren conectividad para las teselas y no transmiten coordenadas por sí mismos.
+
+«Mis datos» muestra únicamente registros de observación que incluyeron ubicación mediante el consentimiento individual «Adjuntar ubicación al registro», y dispositivos GPS recientes privados, restringidos al módulo de movilidad. Los puntos de ejemplo se consultan por separado en «Muestras» y nunca se presentan como mediciones. Los registros anteriores sin GPS permanecen intactos y no aparecen en el mapa hasta que se creen nuevos con coordenadas.
+
+**IMPORTANTE: publicar de nuevo `firestore.rules` en Firebase** tras actualizar: se añadió `position` opcional y validado para guardar registros georreferenciados. Si las reglas anteriores permanecen activas, las observaciones con ubicación no se podrán subir; la aplicación conserva entonces una copia local. Los registros sin ubicación mantienen el formato anterior y siguen siendo válidos.

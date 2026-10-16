@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { ArrowRight, LockKeyhole } from "lucide-react";
+import { ArrowRight, LockKeyhole, MapPin } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,20 +12,25 @@ import { Button } from "./ui/button";
 import { MODULES } from "@/data";
 import type { ModuleId, Observation } from "@/types";
 import type { Workspace } from "@/hooks/useWorkspace";
+import type { Sensors } from "@/hooks/useSensors";
+import { isFreshLocation } from "@/lib/telemetry";
 export function ObservationDialog({
   open,
   onOpenChange,
   initialModule,
   workspace,
+  sensors,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialModule: ModuleId;
   workspace: Workspace;
+  sensors: Sensors;
 }) {
   const [type, setType] = useState<ModuleId>(initialModule),
     [level, setLevel] = useState<Observation["level"]>("observación"),
     [note, setNote] = useState(""),
+    [attachLocation, setAttachLocation] = useState(false),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   async function submit(e: FormEvent) {
@@ -34,8 +39,14 @@ export function ObservationDialog({
     setError("");
     setBusy(true);
     try {
-      await workspace.save(type, level, note);
+      const location = sensors.location;
+      if (attachLocation && (sensors.gpsStatus !== "active" || !isFreshLocation(location))) {
+        throw new Error("Activa el GPS y espera una lectura reciente para asociarla al registro.");
+      }
+      await workspace.save(type, level, note, attachLocation && isFreshLocation(location)
+        ? { lat: location.lat, lng: location.lng, accuracy: location.accuracy } : undefined);
       setNote("");
+      setAttachLocation(false);
       onOpenChange(false);
     } catch (e) {
       setError((e as Error).message);
@@ -95,6 +106,19 @@ export function ObservationDialog({
             placeholder="¿Qué observaste? Incluye el lugar y los detalles relevantes."
             rows={5}
           />
+          <div className="observation-geotag">
+            <label className="geo-checkbox">
+              <input type="checkbox" checked={attachLocation} onChange={(e) => setAttachLocation(e.target.checked)} />
+              <MapPin size={16} />
+              <span>Adjuntar ubicación al registro <small>Opcional · solo visible para tu cuenta</small></span>
+            </label>
+            {attachLocation && (sensors.gpsStatus !== "active" || !isFreshLocation(sensors.location)) && (
+              <Button type="button" size="sm" variant="outline" onClick={() => void sensors.startGPS()}>Activar GPS</Button>
+            )}
+            {attachLocation && sensors.gpsStatus === "active" && isFreshLocation(sensors.location) && (
+              <span className="micro">PRECISIÓN ± {Math.round(sensors.location.accuracy)} m</span>
+            )}
+          </div>
           <div className="form-note">
             <span>
               <LockKeyhole size={12} />

@@ -13,6 +13,7 @@ import {
   storeObservations,
 } from "@/lib/storage";
 import { isFreshLocation, isLiveDevice } from "@/lib/telemetry";
+import { isValidPosition } from "@/lib/geo";
 import {
   login,
   logout,
@@ -204,10 +205,12 @@ export function useWorkspace(sensors: Sensors, notify: Notify) {
     }
   };
   const save = useCallback(
-    async (type: ModuleId, level: Observation["level"], note: string) => {
+    async (type: ModuleId, level: Observation["level"], note: string, position?: Observation["position"]) => {
       const trimmed = note.trim();
       if (!trimmed || trimmed.length > 500)
         throw new Error("Escribe entre 1 y 500 caracteres.");
+      if (position && !isValidPosition(position))
+        throw new Error("La ubicación GPS no es válida.");
       const record: Observation = {
         id: crypto.randomUUID(),
         type,
@@ -217,6 +220,7 @@ export function useWorkspace(sensors: Sensors, notify: Notify) {
         source: "manual",
         deviceId,
         ...(user ? { ownerUid: user.uid } : {}),
+        ...(position ? { position } : {}),
       };
       let saved = false;
       if (user && navigator.onLine) {

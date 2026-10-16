@@ -4,6 +4,11 @@ import "leaflet/dist/leaflet.css";
 import { Crosshair, Minus, Plus, MapPinned } from "lucide-react";
 import type { MapPoint } from "@/types";
 import { Button } from "./ui/button";
+const BASEMAPS = {
+  dark: {url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", options: { attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · <a href="https://carto.com/attributions">CARTO</a>', subdomains: "abcd", maxZoom: 19 }},
+  street: {url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", options: { attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>', maxZoom: 19 }},
+  satellite: {url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", options: { attribution: 'Imagery © <a href="https://www.esri.com">Esri</a> and its data providers', maxZoom: 19 }},
+} as const;
 const symbols: Record<MapPoint["type"], string> = {
   ambiental: "E",
   sismico: "S",
@@ -16,15 +21,18 @@ function GeoMap({
   selected,
   onSelect,
   online,
+  basemap,
 }: {
   points: MapPoint[];
   selected: string | null;
   onSelect: (p: MapPoint) => void;
   online: boolean;
+  basemap: keyof typeof BASEMAPS;
 }) {
   const host = useRef<HTMLDivElement>(null),
     map = useRef<L.Map | null>(null),
-    markers = useRef<L.LayerGroup | null>(null);
+    markers = useRef<L.LayerGroup | null>(null),
+    tileLayer = useRef<L.TileLayer | null>(null);
   const [ready, setReady] = useState(false),
     [tileError, setTileError] = useState(false),
     [center, setCenter] = useState("12.65° N / 85.62° O");
@@ -39,17 +47,7 @@ function GeoMap({
     }).setView([12.65, -85.62], 7);
     map.current = instance;
     markers.current = L.layerGroup().addTo(instance);
-    const layer = L.tileLayer(
-      "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-      {
-        attribution:
-          '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: "abcd",
-        maxZoom: 19,
-      },
-    ).addTo(instance);
-    layer.on("tileerror", () => setTileError(true));
-    layer.on("tileload", () => setTileError(false));
+
     instance.on("moveend", () => {
       const c = instance.getCenter();
       setCenter(
@@ -66,15 +64,28 @@ function GeoMap({
       instance.remove();
       map.current = null;
       markers.current = null;
+      tileLayer.current = null;
     };
   }, []);
+  useEffect(() => {
+    if (!ready || !map.current) return;
+    if (tileLayer.current) map.current.removeLayer(tileLayer.current);
+    setTileError(false);
+    const config = BASEMAPS[basemap];
+    const layer = L.tileLayer(config.url, {...config.options});
+    layer.on("tileerror", () => setTileError(true));
+    layer.on("tileload", () => setTileError(false));
+    layer.addTo(map.current);
+    tileLayer.current = layer;
+    return () => { if (map.current?.hasLayer(layer)) map.current.removeLayer(layer); };
+  }, [ready, basemap]);
   useEffect(() => {
     if (!ready || !markers.current) return;
     markers.current.clearLayers();
     points.forEach((p) => {
       const icon = L.divIcon({
         className: "rvx-marker",
-        html: `<span class="map-node ${p.demo ? "" : "real"} ${selected === p.id ? "selected" : ""}">${symbols[p.type]}</span>`,
+        html: `<span class="map-node ${p.demo ? "" : "real"} ${p.kind === "observation" ? "observation" : ""} ${selected === p.id ? "selected" : ""}">${symbols[p.type]}</span>`,
         iconSize: [36, 36],
         iconAnchor: [18, 18],
       });
@@ -113,7 +124,7 @@ function GeoMap({
     else map.current.setView([12.65, -85.62], 7);
   }
   return (
-    <div className="geo-map">
+    <div className={`geo-map layer-${basemap}`}>
       <div
         ref={host}
         className="map-host"

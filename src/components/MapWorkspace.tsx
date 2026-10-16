@@ -1,6 +1,8 @@
 import { lazy, Suspense, useMemo, useState } from "react";
 import { ArrowUpRight, Layers2, X, MapPin, CircleDot } from "lucide-react";
 import { SAMPLE_POINTS, MODULES } from "@/data";
+import { observationMapPoints } from "@/lib/geo";
+import { isFreshLocation } from "@/lib/telemetry";
 import type { MapPoint, ModuleId } from "@/types";
 import type { Sensors } from "@/hooks/useSensors";
 import type { Workspace } from "@/hooks/useWorkspace";
@@ -17,8 +19,9 @@ export function MapWorkspace({
   sensors: Sensors;
   workspace: Workspace;
 }) {
-  const [source, setSource] = useState("demo"),
+  const [source, setSource] = useState("real"),
     [filter, setFilter] = useState("todos"),
+    [basemap, setBasemap] = useState<"dark" | "street" | "satellite">("dark"),
     [selected, setSelected] = useState<MapPoint | null>(null);
   const effectiveFilter = module ?? filter;
   const points = useMemo(() => {
@@ -26,9 +29,15 @@ export function MapWorkspace({
       return SAMPLE_POINTS.filter(
         (p) => effectiveFilter === "todos" || p.type === effectiveFilter,
       );
+    // Registros de campo con geolocalización voluntaria, públicos solo para su propietario.
+    const observations = observationMapPoints(
+      workspace.observations,
+      effectiveFilter === "todos" ? undefined : effectiveFilter,
+    );
+    // Los dispositivos en movimiento pertenecen únicamente al módulo GPS.
     if (effectiveFilter !== "todos" && effectiveFilter !== "transporte")
-      return [];
-    const cloud: MapPoint[] = workspace.liveDevices
+      return observations;
+    const devices: MapPoint[] = workspace.liveDevices
       .filter((d) => d.deviceId !== workspace.deviceId)
       .map((d) => ({
         id: d.id,
@@ -36,25 +45,28 @@ export function MapWorkspace({
         name: d.name,
         lat: d.lat,
         lng: d.lng,
-        subtitle: "Nodo de tu cuenta privada",
+        subtitle: "Dispositivo de tu cuenta privada",
         value: `Precisión ± ${Math.round(d.accuracy)} m`,
         demo: false,
+        kind: "device",
       }));
-    if (sensors.location && sensors.gpsStatus === "active")
-      cloud.push({
+    if (sensors.gpsStatus === "active" && isFreshLocation(sensors.location))
+      devices.push({
         id: "local",
         type: "actual",
         name: "Este dispositivo",
         lat: sensors.location.lat,
         lng: sensors.location.lng,
-        subtitle: "Ubicación local autorizada",
+        subtitle: "GPS local · no se transmite sin consentimiento",
         value: `Precisión ± ${Math.round(sensors.location.accuracy)} m`,
         demo: false,
+        kind: "local",
       });
-    return cloud;
+    return [...observations, ...devices];
   }, [
     source,
     effectiveFilter,
+    workspace.observations,
     workspace.liveDevices,
     workspace.deviceId,
     sensors.location,
@@ -80,7 +92,7 @@ export function MapWorkspace({
         >
           <TabsList aria-label="Origen de las posiciones">
             <TabsTrigger value="demo">Muestras</TabsTrigger>
-            <TabsTrigger value="real">Mis nodos</TabsTrigger>
+            <TabsTrigger value="real">Mis datos</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -104,6 +116,10 @@ export function MapWorkspace({
             ]}
           />
         )}
+        <div className="map-layer-selection">
+          <Select label="Tipo de cartografía" value={basemap} onValueChange={(v) => setBasemap(v as "dark" | "street" | "satellite")}
+            options={[{value:"dark",label:"Oscuro"},{value:"street",label:"Calles"},{value:"satellite",label:"Satélite"}]} />
+        </div>
       </div>
       <div className="map-stage">
         <Suspense
@@ -119,6 +135,7 @@ export function MapWorkspace({
             selected={selectedPoint?.id ?? null}
             onSelect={setSelected}
             online={workspace.online}
+            basemap={basemap}
           />
         </Suspense>
         {source === "real" && !points.length && (
@@ -127,8 +144,8 @@ export function MapWorkspace({
             <strong>Tu próxima conexión empieza aquí.</strong>
             <p>
               {module && module !== "transporte"
-                ? "Este módulo utiliza observaciones locales. Los nodos GPS están en Movilidad."
-                : "Activa el GPS para localizar este dispositivo o transmite desde otro equipo con tu cuenta."}
+                ? "Registra una observación y autoriza adjuntar el GPS para situarla en este mapa."
+                : "Activa el GPS para ubicar este equipo, o comparte datos desde otro dispositivo de tu cuenta."}
             </p>
             {(!module || module === "transporte") && (
               <Button size="sm" variant="outline" onClick={sensors.startGPS}>
@@ -143,7 +160,11 @@ export function MapWorkspace({
             <span className="micro">
               {selectedPoint.demo
                 ? "REFERENCIA DEMO"
-                : "DISPOSITIVO AUTORIZADO"}
+                : selectedPoint.kind === "observation"
+                  ? "OBSERVACIÓN GEOLOCALIZADA"
+                  : selectedPoint.kind === "local"
+                    ? "GPS DE ESTE EQUIPO"
+                    : "DISPOSITIVO AUTORIZADO"}
             </span>
             <Button
               size="icon"
@@ -167,7 +188,7 @@ export function MapWorkspace({
           <i />
           {source === "demo"
             ? "Ubicaciones ilustrativas · no son mediciones"
-            : "Posiciones recientes · acceso privado"}
+            : "Observaciones autorizadas y GPS reciente · privado"}
         </span>
         <span className="micro">GEO / 01</span>
       </div>

@@ -33,6 +33,7 @@ export interface MapPoint {
   lng: number;
   value: string;
   demo: boolean;
+  kind?: "device" | "observation" | "local";
 }
 export interface DeviceRecord {
   id: string;
@@ -57,6 +58,7 @@ export interface Observation {
   deviceId: string;
   cloud?: boolean;
   ownerUid?: string;
+  position?: { lat: number; lng: number; accuracy: number };
 }
 export interface SessionUser {
   uid: string;

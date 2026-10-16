@@ -233,9 +233,7 @@ export function ModuleWorkspace({
   onNew: () => void;
 }) {
   const module = MODULES.find((m) => m.id === id)!;
-  const [view, setView] = useState(
-    id === "sismico" || id === "seguridad" ? "instrumento" : "mapa",
-  );
+  const [view, setView] = useState("mapa");
   const note = notes[id];
   return (
     <>

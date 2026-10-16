@@ -466,6 +466,7 @@ export default function App() {
             onOpenChange={setNewOpen}
             initialModule={isModule(page) ? page : "ambiental"}
             workspace={workspace}
+            sensors={sensors}
           />
           <AnimatePresence>
             {toast && (

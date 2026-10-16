@@ -26,14 +26,25 @@ service cloud.firestore {
     match /observations/{observationId} {
       allow read, delete: if owns(resource.data);
       allow create: if owns(request.resource.data)
-        && request.resource.data.keys().hasOnly(['ownerUid','type','level','note','localTime','source','deviceId','createdAt'])
+        && request.resource.data.keys().hasOnly(['ownerUid','type','level','note','localTime','source','deviceId','createdAt','position'])
         && request.resource.data.type in ['ambiental','sismico','transporte','seguridad']
         && request.resource.data.level in ['observación','revisión','prueba']
         && request.resource.data.note is string && request.resource.data.note.size() > 0 && request.resource.data.note.size() <= 500
         && request.resource.data.localTime is string && request.resource.data.localTime.size() <= 40
         && request.resource.data.source == 'manual'
         && request.resource.data.deviceId is string && request.resource.data.deviceId.size() <= 80
-        && request.resource.data.createdAt == request.time;
+        && request.resource.data.createdAt == request.time
+        && (!("position" in request.resource.data) || (
+          request.resource.data.position is map
+          && request.resource.data.position.keys().hasAll(["lat","lng","accuracy"])
+          && request.resource.data.position.keys().hasOnly(["lat","lng","accuracy"])
+          && request.resource.data.position.lat is number
+          && request.resource.data.position.lat >= -90 && request.resource.data.position.lat <= 90
+          && request.resource.data.position.lng is number
+          && request.resource.data.position.lng >= -180 && request.resource.data.position.lng <= 180
+          && request.resource.data.position.accuracy is number
+          && request.resource.data.position.accuracy >= 0 && request.resource.data.position.accuracy <= 100000
+        ));
       allow update: if false;
     }
     match /{document=**} { allow read, write: if false; }

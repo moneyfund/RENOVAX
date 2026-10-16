@@ -796,3 +796,18 @@ dd { margin: 0; max-width: 70%; overflow-wrap: anywhere; text-align: right; colo
   .sidebar, .topbar { background-color: #121016; }
   .map-coordinate, .point-detail, .map-tools { background-color: #1c1623; }
 }
+
+/* Mapas RENOVAX: controles compactos, capas de proveedores y registros georreferenciados. */
+.map-layer-selection { margin-left: auto; min-width: 116px; max-width: 150px; }
+.map-layer-selection .select-trigger { border: 1px solid #c4a7ef26; border-radius: 7px; background: #1b1822dd; min-height: 30px; font: 400 10px var(--mono); color: #dfd2ee; }
+.geo-map.layer-street .leaflet-tile-pane { filter: brightness(.85) saturate(.65) contrast(1.05); }
+.geo-map.layer-satellite .leaflet-tile-pane { filter: brightness(.85) saturate(.85) contrast(1.05); }
+.map-node.observation { border-radius: 10px; background: #352444; border-color: #d4b1ff; font-size: 12px; box-shadow: 0 0 0 4px #c4a7ef16, 0 3px 10px #0009; }
+.map-node.observation::after { border-radius: 13px; }
+.observation-geotag { margin: 12px 0; border: 1px solid #c4a7ef25; border-radius: 9px; padding: 12px; display: flex; align-items: center; gap: 12px; justify-content: space-between; flex-wrap: wrap; background: #c4a7ef08; }
+.geo-checkbox { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 12px; }
+.geo-checkbox input { accent-color: var(--primary); width: 16px; height: 16px; }
+.geo-checkbox svg { color: var(--primary); }
+.geo-checkbox span { display: flex; flex-direction: column; gap: 3px; }
+.geo-checkbox small { color: var(--muted); font-size: 10px; }
+@media(max-width: 680px) { .map-layer-selection { min-width: 104px; } .map-layer-selection .select-trigger { font-size: 10px; } }

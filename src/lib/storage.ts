@@ -1,4 +1,5 @@
 import type { Observation } from "@/types";
+import { isValidPosition } from "./geo";
 
 export function getInstallationId(): string {
   try {
@@ -26,7 +27,8 @@ export function isObservation(value: unknown): value is Observation {
     typeof o.localTime === "string" &&
     Number.isFinite(Date.parse(o.localTime)) &&
     typeof o.deviceId === "string" &&
-    o.source === "manual"
+    o.source === "manual" &&
+    (o.position === undefined || isValidPosition(o.position))
   );
 }
 export function readObservations(): Observation[] {
