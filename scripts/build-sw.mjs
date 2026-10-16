@@ -22,7 +22,7 @@ const version = hash.digest("hex").slice(0, 16),
 const source = `// Generated from the verified build. Private API responses and external maps are never cached.
 const CACHE='renovax-os-${version}';
 const ASSETS=${JSON.stringify(urls)};
-self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS))));
+self.addEventListener('install',event=>event.waitUntil((async()=>{await caches.open(CACHE).then(cache=>cache.addAll(ASSETS));await self.skipWaiting();})()));
 self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting();});
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
  const names=await caches.keys();
@@ -33,7 +33,7 @@ self.addEventListener('fetch',event=>{
  const url=new URL(event.request.url);
  if(event.request.method!=='GET'||url.origin!==self.location.origin||url.pathname.startsWith('/api/'))return;
  if(event.request.mode==='navigate'){
-  event.respondWith(caches.open(CACHE).then(async cache=>(await cache.match('/index.html'))||fetch(event.request)));return;
+  event.respondWith((async()=>{try{const response=await fetch(event.request,{cache:'no-store'});if(response.ok)return response;}catch{}return (await caches.open(CACHE)).match('/index.html')||Response.error();})());return;
  }
  if(!ASSETS.includes(url.pathname))return;
  event.respondWith(caches.open(CACHE).then(async cache=>(await cache.match(url.pathname))||fetch(event.request)));

@@ -174,3 +174,12 @@ export async function publishObservation(uid: string, record: Observation) {
     createdAt: s.serverTimestamp(),
   });
 }
+
+/** Firebase Storage para archivos privados. Nunca se inicializa sin sesión. */
+export async function getAuthorizedStorage() {
+  const { auth } = await getClient();
+  const user = auth.currentUser;
+  if (!user) throw new Error("Inicia sesión para acceder a Storage.");
+  const { getStorage } = await import("firebase/storage");
+  return { storage: getStorage(auth.app), ownerUid: user.uid };
+}

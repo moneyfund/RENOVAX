@@ -100,3 +100,19 @@ Las pruebas cubren navegación de los cuatro módulos, paleta de comandos, guard
 Los permisos y sensores se simulan en las pruebas. Aún requieren validación física en Android/iOS y una cuenta Firebase configurada. En esta revisión no se dispuso de una superficie autorizada de navegador para QA visual; el responsive se implementó con breakpoints de 480, 760, 1030, 1250 y 1600 px.
 
 Vercel está vinculado a `main`. Publicar un único commit revisado desencadena un único build de producción; no se debe crear además un despliegue manual del mismo commit.
+
+## Configuración RENOVAX Firebase (16 de octubre de 2026)
+
+El proyecto de producción usa **Firebase `renovax-5fbf0`**. Las variables públicas del SDK web están configuradas en Vercel (production, preview y development), sin valores sensibles almacenados en este repositorio. El módulo `src/lib/firebase.ts` prepara Firebase Authentication, Firestore y `getAuthorizedStorage()` para Cloud Storage. La medición de Analytics **no se activa** de forma automática.
+
+La conexión requiere publicar desde Firebase las reglas de **Firestore** y **Storage**, más los índices de Firestore. El despliegue de Vercel no publica reglas de Firebase. Para instalarlas desde una sesión autenticada con permisos en Firebase:
+
+```bash
+npx firebase-tools login
+npx firebase-tools use renovax-5fbf0
+npx firebase-tools deploy --only firestore,storage --project renovax-5fbf0
+```
+
+El archivo `storage.rules` restringe el espacio futuro `users/{uid}/captures/*` a su propietario, y acepta únicamente archivos de imagen menores a 10 MB. No existe carga automática de fotografías ni grabaciones. Después de publicar las reglas, iniciar sesión en Configuración y verificar el acceso a Firestore en un dispositivo real.
+
+La PWA ahora solicita el HTML primero a la red y usa la copia local **solo cuando no hay conexión**. Las versiones nuevas toman el control automáticamente y recargan la interfaz; los recursos estáticos versionados permanecen en caché para uso sin conexión.
