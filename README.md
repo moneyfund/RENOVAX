@@ -137,3 +137,7 @@ La cartografía depende de conectividad y de las condiciones de los proveedores.
 No se incluyen claves de terceros. Las teselas no se almacenan en la caché PWA,
 y para una operación comercial de gran escala será necesario contratar un servicio
 con capacidad y términos de uso adecuados.
+
+## Cartografía en colores originales
+
+Se eliminó el oscurecimiento artificial de las teselas (incluyendo el filtro global gris y los filtros de Calles y Satélite). La vista predeterminada ahora es **Calles**, con colores naturales de OpenStreetMap; **Satélite** también se muestra sin filtros. El diseño dark premium de RENOVAX continúa aplicándose a los controles y paneles, no a la cartografía. No hay una opción «Oscuro» en el selector.

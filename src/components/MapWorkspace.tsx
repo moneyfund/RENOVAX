@@ -21,7 +21,7 @@ export function MapWorkspace({
 }) {
   const [source, setSource] = useState("real"),
     [filter, setFilter] = useState("todos"),
-    [basemap, setBasemap] = useState<"dark" | "street" | "satellite">("dark"),
+    [basemap, setBasemap] = useState<"street" | "satellite">("street"),
     [selected, setSelected] = useState<MapPoint | null>(null);
   const effectiveFilter = module ?? filter;
   const points = useMemo(() => {
@@ -117,8 +117,8 @@ export function MapWorkspace({
           />
         )}
         <div className="map-layer-selection">
-          <Select label="Tipo de cartografía" value={basemap} onValueChange={(v) => setBasemap(v as "dark" | "street" | "satellite")}
-            options={[{value:"dark",label:"Oscuro"},{value:"street",label:"Calles"},{value:"satellite",label:"Satélite"}]} />
+          <Select label="Tipo de cartografía" value={basemap} onValueChange={(v) => setBasemap(v as "street" | "satellite")}
+            options={[{value:"street",label:"Calles"},{value:"satellite",label:"Satélite"}]} />
         </div>
       </div>
       <div className="map-stage">

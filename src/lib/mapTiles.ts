@@ -1,17 +1,10 @@
 /**
  * RENOVAX cartography sources.
- * OpenStreetMap raster tiles are the keyless shared basemap. The dark style
- * is a presentation filter applied to the same tiles; no provider API key.
+ * OpenStreetMap raster tiles show their natural colors, with no visual filter
+ * or provider API key.
  * Follow provider tile-use policies, provide attribution and avoid bulk use.
  */
 export const BASEMAPS = {
-  dark: {
-    url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-    options: {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
-      maxZoom: 19,
-    },
-  },
   street: {
     url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     options: {

@@ -10,8 +10,9 @@ describe("keyless map backgrounds", () => {
       expect(layer.options.attribution.length, name).toBeGreaterThan(20);
     }
   });
-  it("shares a free OpenStreetMap raster for street and graphite modes", () => {
-    expect(BASEMAPS.dark.url).toBe(BASEMAPS.street.url);
-    expect(BASEMAPS.dark.url).toContain("tile.openstreetmap.org");
+  it("uses natural color cartography with no dark variant", () => {
+    expect(BASEMAPS.street.url).toContain("tile.openstreetmap.org");
+    expect(BASEMAPS).not.toHaveProperty("dark");
+    expect(Object.keys(BASEMAPS).sort()).toEqual(["satellite", "street"]);
   });
 });
