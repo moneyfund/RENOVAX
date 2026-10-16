@@ -43,10 +43,16 @@ export default function Settings({
           transition={{ type: "spring", stiffness: 210, damping: 27 }}
         >
           <div className="identity-heading">
-            <span className="identity-heading-icon"><ShieldCheck size={19} /></span>
+            <span className="identity-heading-icon">
+              {workspace.user?.photoURL ? (
+                <img src={workspace.user.photoURL} alt="" referrerPolicy="no-referrer" />
+              ) : (
+                <ShieldCheck size={19} />
+              )}
+            </span>
             <div>
-              <strong>Acceso seguro a RENOVAX</strong>
-              <small>Tu sesión de Google protege tus datos y dispositivos.</small>
+              <strong>{workspace.user?.displayName || "Acceso seguro a RENOVAX"}</strong>
+              <small>{workspace.user?.email || "Tu sesión de Google protege tus datos y dispositivos."}</small>
             </div>
           </div>
           <div className="settings-status">
@@ -56,8 +62,10 @@ export default function Settings({
                 ? "Revisar conexión"
                 : workspace.user
                   ? "Cuenta conectada"
-                  : firebaseReady
-                    ? "Listo para conectar"
+                  : !workspace.authReady
+                    ? "Restaurando sesión"
+                    : firebaseReady
+                      ? "Listo para conectar"
                     : "Configuración pendiente"}
             </span>
           </div>
@@ -91,23 +99,23 @@ export default function Settings({
           )}
           {workspace.syncError && (
             <p className="inline-error">
-              No se pudieron leer los datos privados. Verifica las reglas y los
-              índices de Firestore.
+              No se pudieron leer los datos privados. Comprueba que las reglas
+              de Firestore permitan consultar únicamente tus registros.
             </p>
           )}
           <div className="settings-actions">
             <Button
               variant="outline"
               className={workspace.user ? "" : "google-login-button"}
-              disabled={!firebaseReady || workspace.authBusy}
+              disabled={!firebaseReady || !workspace.authReady || workspace.authBusy}
               onClick={() =>
                 void (workspace.user ? workspace.signOut() : workspace.signIn())
               }
               aria-label={workspace.user ? "Cerrar sesión de RENOVAX" : "Iniciar sesión con Google"}
             >
               {workspace.user ? <LogOut /> : <GoogleMark />}
-              {workspace.authBusy
-                ? "Conectando…"
+              {!workspace.authReady || workspace.authBusy
+                ? "Cargando cuenta…"
                 : workspace.user
                   ? "Cerrar sesión"
                   : "Continuar con Google"}

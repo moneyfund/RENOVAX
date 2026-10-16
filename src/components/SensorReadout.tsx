@@ -51,8 +51,9 @@ export function SensorReadout({
       setSoundState("Audio no disponible");
     }
   }
-  const gpsOn = ["active", "requesting"].includes(sensors.gpsStatus),
-    motionOn = ["active", "requesting"].includes(sensors.motionStatus);
+  // "Sin señal" does not revoke the user's permission or remove a listener.
+  const gpsOn = ["active", "requesting", "unavailable"].includes(sensors.gpsStatus),
+    motionOn = ["active", "requesting", "unavailable"].includes(sensors.motionStatus);
   return (
     <div className={`sensor-readout ${compact ? "compact" : ""}`}>
       <div className="sensor-line">

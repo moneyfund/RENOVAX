@@ -14,6 +14,7 @@ import {
 } from "@/lib/storage";
 import { isFreshLocation, isLiveDevice } from "@/lib/telemetry";
 import { isValidPosition } from "@/lib/geo";
+import { firebaseReady } from "@/lib/firebase";
 import {
   login,
   logout,
@@ -28,6 +29,8 @@ import {
 export function useWorkspace(sensors: Sensors, notify: Notify) {
   const [deviceId] = useState(getInstallationId);
   const [user, setUser] = useState<SessionUser | null>(null);
+  const [authReady, setAuthReady] = useState(!firebaseReady);
+  const lastUser = useRef<string | null>(null);
   const [devices, setDevices] = useState<DeviceRecord[]>([]),
     [cloud, setCloud] = useState<Observation[]>([]);
   const [local, setLocal] = useState(readObservations),
@@ -43,10 +46,23 @@ export function useWorkspace(sensors: Sensors, notify: Notify) {
     () =>
       observeUser(
         (u) => {
-          setUser(u);
-          setSharing(false);
+          const uid = u?.uid ?? null;
+          if (uid !== lastUser.current) {
+            lastUser.current = uid;
+            setSharing(false);
+          }
+          setUser(u ? {
+            uid: u.uid,
+            email: u.email,
+            displayName: u.displayName,
+            photoURL: u.photoURL ?? null,
+          } : null);
+          setAuthReady(true);
         },
-        () => notify("No se pudo abrir la conexión de identidad."),
+        () => {
+          setAuthReady(true);
+          notify("No se pudo recuperar la sesión de Google.");
+        },
       ),
     [notify],
   );
@@ -54,20 +70,23 @@ export function useWorkspace(sensors: Sensors, notify: Notify) {
     setDevices([]);
     setCloud([]);
     setSyncError(false);
-    if (!user) return;
+    if (!user?.uid) return;
     const failed = () => {
       setSyncError(true);
       notify(
         "Sincronización interrumpida. Tus registros locales siguen disponibles.",
       );
     };
-    const a = observeDevices(user.uid, setDevices, failed),
-      b = observeObservations(user.uid, setCloud, failed);
+    const uid = user.uid;
+    const a = observeDevices(uid, (records) =>
+      setDevices(records.filter((d) => d.ownerUid === uid)), failed),
+      b = observeObservations(uid, (records) =>
+        setCloud(records.filter((o) => o.ownerUid === uid)), failed);
     return () => {
       a();
       b();
     };
-  }, [user, notify]);
+  }, [user?.uid, notify]);
   useEffect(() => {
     const network = () => setOnline(navigator.onLine);
     const timer = setInterval(() => setNow(Date.now()), 10000);
@@ -136,7 +155,7 @@ export function useWorkspace(sensors: Sensors, notify: Notify) {
         .then(() => markDeviceOffline(uid, deviceId))
         .catch(() => {});
     };
-  }, [sharing, user, deviceId, notify]);
+  }, [sharing, user?.uid, deviceId, notify]);
   useEffect(() => {
     if (sharing && (sensors.gpsStatus !== "active" || !online))
       setSharing(false);
@@ -147,7 +166,7 @@ export function useWorkspace(sensors: Sensors, notify: Notify) {
       notify("Transmisión detenida.");
       return;
     }
-    if (!user) {
+    if (!user || !authReady) {
       notify("Conecta tu cuenta en Configuración para compartir ubicación.");
       return;
     }
@@ -166,16 +185,19 @@ export function useWorkspace(sensors: Sensors, notify: Notify) {
   const signIn = async () => {
     setAuthBusy(true);
     try {
-      await login();
-      notify("Cuenta conectada.");
+      const credential = await login();
+      if (credential) notify("Perfil de Google conectado.");
+      else notify("Completa el inicio de sesión para continuar.");
     } catch (error) {
       const code = (error as { code?: string }).code;
       notify(
         code === "auth/unauthorized-domain"
           ? "El dominio debe autorizarse en Firebase Authentication."
-          : code === "auth/popup-closed-by-user"
+          : code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request"
             ? "Inicio de sesión cancelado."
-            : "No se pudo conectar la cuenta. Revisa la configuración de Firebase.",
+            : code === "auth/network-request-failed"
+              ? "Revisa la conexión a Internet para continuar con Google."
+              : "No se pudo conectar la cuenta. Revisa la configuración de Firebase.",
       );
     } finally {
       setAuthBusy(false);
@@ -255,21 +277,25 @@ export function useWorkspace(sensors: Sensors, notify: Notify) {
   );
   const observations = useMemo(() => {
     const merged = new Map<string, Observation>();
+    // Anonymous records are visible only when signed out, never to a
+    // different Google account sharing the same browser installation.
     local
-      .filter((o) => !o.ownerUid || o.ownerUid === user?.uid)
+      .filter((o) => user?.uid ? o.ownerUid === user.uid : !o.ownerUid)
       .forEach((o) => merged.set(o.id, o));
-    cloud.forEach((o) => merged.set(o.id, o));
+    cloud.filter((o) => user?.uid && o.ownerUid === user.uid)
+      .forEach((o) => merged.set(o.id, o));
     return [...merged.values()].sort(
       (a, b) => Date.parse(b.localTime) - Date.parse(a.localTime),
     );
   }, [local, cloud, user]);
   const liveDevices = useMemo(
-    () => devices.filter((d) => isLiveDevice(d, now)),
-    [devices, now],
+    () => devices.filter((d) => user?.uid && d.ownerUid === user.uid && isLiveDevice(d, now)),
+    [devices, now, user?.uid],
   );
   return {
     deviceId,
     user,
+    authReady,
     devices,
     liveDevices,
     observations,

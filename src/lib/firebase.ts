@@ -20,8 +20,16 @@ async function initialize() {
     import("firebase/firestore"),
   ]);
   const app = appSDK.getApps()[0] || appSDK.initializeApp(config);
+  const auth = authSDK.getAuth(app);
+  // Keep the user's Google session across reloads in normal browser sessions.
+  // Storage-restricted browsers may reject persistence; Auth can still run.
+  try {
+    await authSDK.setPersistence(auth, authSDK.browserLocalPersistence);
+  } catch {
+    // Do not block login when storage access is restricted.
+  }
   return {
-    auth: authSDK.getAuth(app),
+    auth,
     db: dbSDK.getFirestore(app),
     authSDK,
     dbSDK,
@@ -35,7 +43,18 @@ const getClient = () =>
   }));
 export async function login() {
   const { auth, authSDK } = await getClient();
-  return authSDK.signInWithPopup(auth, new authSDK.GoogleAuthProvider());
+  const provider = new authSDK.GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+  try {
+    return await authSDK.signInWithPopup(auth, provider);
+  } catch (error) {
+    const code = (error as { code?: string }).code;
+    if (code === "auth/popup-blocked" || code === "auth/operation-not-supported-in-this-environment") {
+      await authSDK.signInWithRedirect(auth, provider);
+      return null;
+    }
+    throw error;
+  }
 }
 export async function logout() {
   if (firebaseReady) {
@@ -72,6 +91,8 @@ export function observeUser(
   }
   return subscribe(async () => {
     const { auth, authSDK } = await getClient();
+    // Finalize pending redirect sign-ins so the observer restores Google profiles.
+    void authSDK.getRedirectResult(auth).catch(onError);
     return authSDK.onAuthStateChanged(auth, callback, onError);
   }, onError);
 }
@@ -122,8 +143,7 @@ export function observeObservations(
       s.query(
         s.collection(db, "observations"),
         s.where("ownerUid", "==", uid),
-        s.orderBy("createdAt", "desc"),
-        s.limit(100),
+        s.limit(150),
       ),
       (snap) => {
         const records: unknown[] = snap.docs.map((d) => ({
@@ -131,7 +151,9 @@ export function observeObservations(
           id: d.id,
           cloud: true,
         }));
-        callback(records.filter(isObservation));
+        callback(records.filter(isObservation).sort((a, b) =>
+          Date.parse(b.localTime) - Date.parse(a.localTime),
+        ).slice(0, 100));
       },
       onError,
     );

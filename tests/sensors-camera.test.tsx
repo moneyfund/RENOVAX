@@ -13,6 +13,7 @@ import CameraPanel from "../src/components/CameraPanel";
 let positionSuccess: PositionCallback;
 const clearWatch = vi.fn();
 beforeEach(() => {
+  clearWatch.mockClear();
   Object.defineProperty(navigator, "geolocation", {
     configurable: true,
     value: {
@@ -30,6 +31,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 describe("Sensor consent and lifecycle", () => {
@@ -139,5 +141,45 @@ describe("Camera privacy", () => {
       ),
     );
     expect(screen.getByRole("button", { name: "Activar cámara" })).toBeTruthy();
+  });
+});
+
+describe("Persistent foreground monitoring", () => {
+  it("does not stop a stationary GPS watch after 60 seconds", () => {
+    vi.useFakeTimers();
+    const position = {
+      coords: {latitude: 12.9, longitude: -85.9, accuracy: 8, speed: null, heading: null},
+      timestamp: Date.now(),
+    } as GeolocationPosition;
+    const refresh = vi.fn((success: PositionCallback) => success({...position, timestamp: Date.now()}));
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: {watchPosition: vi.fn((success: PositionCallback) => {
+        positionSuccess = success;
+        return 9;
+      }), clearWatch, getCurrentPosition: refresh},
+    });
+    const {result, unmount} = renderHook(() => useSensors());
+    act(() => result.current.startGPS());
+    act(() => positionSuccess(position));
+    act(() => vi.advanceTimersByTime(65000));
+    expect(result.current.gpsStatus).toBe("active");
+    expect(result.current.location?.lat).toBe(12.9);
+    expect(clearWatch).not.toHaveBeenCalled();
+    expect(refresh).toHaveBeenCalled();
+    unmount();
+  });
+  it("keeps the accelerometer listener after six idle seconds", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("DeviceMotionEvent", class {});
+    const {result, unmount} = renderHook(() => useSensors());
+    await act(async () => result.current.startMotion());
+    const sample = new Event("devicemotion");
+    Object.defineProperty(sample, "acceleration", {value: {x: 0.2, y: 0.1, z: 0.3}});
+    act(() => window.dispatchEvent(sample));
+    expect(result.current.motionStatus).toBe("active");
+    act(() => vi.advanceTimersByTime(6500));
+    expect(result.current.motionStatus).toBe("active");
+    unmount();
   });
 });

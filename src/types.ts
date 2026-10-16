@@ -64,6 +64,7 @@ export interface SessionUser {
   uid: string;
   displayName: string | null;
   email: string | null;
+  photoURL?: string | null;
 }
 export interface InstallPrompt extends Event {
   prompt: () => Promise<void>;

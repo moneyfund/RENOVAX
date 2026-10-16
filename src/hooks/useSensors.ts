@@ -4,136 +4,130 @@ import type { LocationReading, MotionReading, SensorStatus } from "@/types";
 type PermissionMotion = typeof DeviceMotionEvent & {
   requestPermission?: () => Promise<string>;
 };
+/**
+ * The user controls sensor lifetime. In particular, a stationary phone may
+ * produce no new watchPosition events for minutes; inactivity is NOT consent
+ * to deactivate the GPS. Stale coordinates remain unusable for transmission.
+ */
 export function useSensors() {
   const [location, setLocation] = useState<LocationReading | null>(null);
   const [motion, setMotion] = useState<MotionReading | null>(null);
   const [gpsStatus, setGpsStatus] = useState<SensorStatus>("inactive");
   const [motionStatus, setMotionStatus] = useState<SensorStatus>("inactive");
-  const watch = useRef<number | null>(null),
-    handler = useRef<((e: DeviceMotionEvent) => void) | null>(null);
-  const generation = useRef(0),
-    gpsGeneration = useRef(0),
-    gpsExpiry = useRef<ReturnType<typeof setTimeout> | undefined>(undefined),
-    timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const watch = useRef<number | null>(null);
+  const handler = useRef<((e: DeviceMotionEvent) => void) | null>(null);
+  const motionGeneration = useRef(0);
+  const gpsGeneration = useRef(0);
+  const gpsRefresh = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const motionHeartbeat = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
   const stopGPS = useCallback(() => {
     gpsGeneration.current++;
-    clearTimeout(gpsExpiry.current);
-    if (watch.current !== null)
-      navigator.geolocation?.clearWatch(watch.current);
+    clearTimeout(gpsRefresh.current);
+    gpsRefresh.current = undefined;
+    if (watch.current !== null) navigator.geolocation?.clearWatch(watch.current);
     watch.current = null;
     setGpsStatus("inactive");
     setLocation(null);
   }, []);
+
   const startGPS = useCallback(() => {
     if (watch.current !== null) return;
-    if (!navigator.geolocation) {
-      setGpsStatus("unsupported");
-      return;
-    }
+    if (!navigator.geolocation) { setGpsStatus("unsupported"); return; }
     const request = ++gpsGeneration.current;
     setGpsStatus("requesting");
+    const options: PositionOptions = {
+      enableHighAccuracy: true, maximumAge: 0, timeout: 20000,
+    };
+    const isCurrent = () => request === gpsGeneration.current;
+    const position = (p: GeolocationPosition) => {
+      if (!isCurrent()) return;
+      clearTimeout(gpsRefresh.current);
+      setLocation({
+        lat: p.coords.latitude, lng: p.coords.longitude,
+        accuracy: p.coords.accuracy, speed: p.coords.speed,
+        heading: p.coords.heading, timestamp: p.timestamp,
+      });
+      setGpsStatus("active");
+      // Refresh while stationary, rather than cancelling the persistent watch.
+      gpsRefresh.current = setTimeout(refresh, 40000);
+    };
+    const failure = (e: GeolocationPositionError) => {
+      if (!isCurrent()) return;
+      if (e.code === 1) {
+        stopGPS();
+        setGpsStatus("denied");
+        return;
+      }
+      // Transient GPS errors must not discard the explicit user permission.
+      setGpsStatus("unavailable");
+      clearTimeout(gpsRefresh.current);
+      gpsRefresh.current = setTimeout(refresh, 15000);
+    };
+    const refresh = () => {
+      if (!isCurrent() || document.hidden) return;
+      navigator.geolocation.getCurrentPosition(position, failure, options);
+    };
     try {
-      watch.current = navigator.geolocation.watchPosition(
-        (p) => {
-          if (request !== gpsGeneration.current) return;
-          clearTimeout(gpsExpiry.current);
-          gpsExpiry.current = setTimeout(
-            () => {
-              stopGPS();
-              setGpsStatus("unavailable");
-            },
-            Math.max(0, 60000 - (Date.now() - p.timestamp)),
-          );
-          setLocation({
-            lat: p.coords.latitude,
-            lng: p.coords.longitude,
-            accuracy: p.coords.accuracy,
-            speed: p.coords.speed,
-            heading: p.coords.heading,
-            timestamp: p.timestamp,
-          });
-          setGpsStatus("active");
-        },
-        (e) => {
-          if (request !== gpsGeneration.current) return;
-          stopGPS();
-          setGpsStatus(e.code === 1 ? "denied" : "unavailable");
-        },
-        { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 },
-      );
+      watch.current = navigator.geolocation.watchPosition(position, failure, options);
     } catch {
       stopGPS();
       setGpsStatus("unavailable");
     }
   }, [stopGPS]);
+
   const stopMotion = useCallback(() => {
-    generation.current++;
-    clearTimeout(timer.current);
-    if (handler.current)
-      window.removeEventListener("devicemotion", handler.current);
+    motionGeneration.current++;
+    clearTimeout(motionHeartbeat.current);
+    motionHeartbeat.current = undefined;
+    if (handler.current) window.removeEventListener("devicemotion", handler.current);
     handler.current = null;
     setMotionStatus("inactive");
     setMotion(null);
   }, []);
+
   const startMotion = useCallback(async () => {
     if (handler.current) return;
     if (!("DeviceMotionEvent" in window)) {
       setMotionStatus("unsupported");
       return;
     }
-    const request = ++generation.current;
+    const request = ++motionGeneration.current;
     setMotionStatus("requesting");
     try {
       const event = window.DeviceMotionEvent as PermissionMotion;
-      if (
-        event.requestPermission &&
-        (await event.requestPermission()) !== "granted"
-      ) {
-        if (request === generation.current) setMotionStatus("denied");
+      if (event.requestPermission && (await event.requestPermission()) !== "granted") {
+        if (request === motionGeneration.current) setMotionStatus("denied");
         return;
       }
-      if (request !== generation.current) return;
+      if (request !== motionGeneration.current) return;
       let last = 0;
       handler.current = (e) => {
         const linear = e.acceleration;
-        const a =
-          linear && linear.x !== null ? linear : e.accelerationIncludingGravity;
-        if (
-          !a ||
-          a.x === null ||
-          a.y === null ||
-          a.z === null ||
-          ![a.x, a.y, a.z].every(Number.isFinite)
-        )
-          return;
+        const a = linear && linear.x !== null ? linear : e.accelerationIncludingGravity;
+        if (!a || a.x === null || a.y === null || a.z === null ||
+            ![a.x, a.y, a.z].every(Number.isFinite)) return;
         if (Date.now() - last < 100) return;
         last = Date.now();
-        clearTimeout(timer.current);
-        timer.current = setTimeout(() => {
-          stopMotion();
-          setMotionStatus("unavailable");
-        }, 6000);
-        setMotion({
-          x: a.x,
-          y: a.y,
-          z: a.z,
+        clearTimeout(motionHeartbeat.current);
+        motionHeartbeat.current = setTimeout(() => {
+          // Report a pause, but keep the listener; it can recover on the next event.
+          if (request === motionGeneration.current) setMotionStatus("unavailable");
+        }, 20000);
+        setMotion({x: a.x, y: a.y, z: a.z,
           magnitude: Math.hypot(a.x, a.y, a.z),
-          includesGravity: a !== linear,
-          timestamp: last,
-        });
+          includesGravity: a !== linear, timestamp: last});
         setMotionStatus("active");
       };
-      window.addEventListener("devicemotion", handler.current, {
-        passive: true,
-      });
-      timer.current = setTimeout(() => {
-        stopMotion();
-        setMotionStatus("unavailable");
-      }, 6000);
+      window.addEventListener("devicemotion", handler.current, { passive: true });
+      motionHeartbeat.current = setTimeout(() => {
+        if (request === motionGeneration.current) setMotionStatus("unavailable");
+      }, 20000);
     } catch {
-      if (request === generation.current) setMotionStatus("denied");
+      if (request === motionGeneration.current) setMotionStatus("denied");
     }
-  }, [stopMotion]);
+  }, []);
+
   useEffect(() => {
     const hidden = () => {
       if (document.hidden) {
@@ -149,14 +143,8 @@ export function useSensors() {
     };
   }, [stopGPS, stopMotion]);
   return {
-    location,
-    motion,
-    gpsStatus,
-    motionStatus,
-    startGPS,
-    stopGPS,
-    startMotion,
-    stopMotion,
+    location, motion, gpsStatus, motionStatus,
+    startGPS, stopGPS, startMotion, stopMotion,
   };
 }
 export type Sensors = ReturnType<typeof useSensors>;

@@ -206,13 +206,16 @@ export default function App() {
                 onClick={() => navigate("configuracion")}
               >
                 <span className="account-avatar">
-                  {workspace.user?.displayName?.slice(0, 1).toUpperCase() ??
-                    "R"}
+                  {workspace.user?.photoURL ? (
+                    <img src={workspace.user.photoURL} alt="" referrerPolicy="no-referrer" />
+                  ) : (
+                    workspace.user?.displayName?.slice(0, 1).toUpperCase() ?? "R"
+                  )}
                 </span>
                 <span>
-                  {workspace.user?.displayName ?? "Operador local"}
+                  {workspace.user?.displayName || workspace.user?.email?.split("@")[0] || "Operador local"}
                   <small>
-                    {workspace.user ? "Cuenta privada" : "Sin cuenta conectada"}
+                    {workspace.user ? "Cuenta Google verificada" : workspace.authReady ? "Sin cuenta conectada" : "Cargando perfil…"}
                   </small>
                 </span>
                 <ChevronRight size={14} />
@@ -245,11 +248,11 @@ export default function App() {
                     <span>Buscar módulo</span>
                     <kbd>Ctrl K</kbd>
                   </button>
-                  {!workspace.user && firebaseReady && (
+                  {!workspace.user && workspace.authReady && firebaseReady && (
                     <Button
                       variant="outline"
                       className="header-google"
-                      disabled={workspace.authBusy}
+                      disabled={workspace.authBusy || !workspace.authReady}
                       onClick={() => void workspace.signIn()}
                       aria-label="Iniciar sesión con Google"
                     >

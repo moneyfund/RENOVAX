@@ -1055,3 +1055,42 @@ body::before {
     animation: none !important; transition-duration: .01ms !important; transform: none !important;
   }
 }
+
+/* RENOVAX owner artwork: crop the transparent 1:1 canvas without distorting the logo. */
+.brand.brand-official { position: relative; width: 100%; min-height: 55px; max-width: 206px; justify-content: flex-start; }
+.brand-image-frame { position: relative; display: block; width: 205px; height: 57px; overflow: hidden; flex: 0 0 205px; }
+.brand-image-frame img { position: absolute; display: block; width: 251px; height: 251px; max-width: none;
+  left: -21px; top: 50%; transform: translateY(-50%); object-fit: contain; mix-blend-mode: screen;
+}
+.brand-official.is-compact .brand-image-frame { width: 48px; flex-basis: 48px; }
+.brand-official.is-compact .brand-image-frame img { left: -19px; }
+.brand-button { width: 100%; min-width: 0; padding-top: 12px; padding-bottom: 11px; overflow: hidden; }
+.mobile-drawer .brand-official { padding: 0; margin: 0 0 19px; }
+.mobile-drawer .brand-image-frame { width: 220px; }
+.account-avatar { overflow: hidden; }
+.account-avatar img, .identity-heading-icon img { width: 100%; height: 100%; object-fit: cover; }
+.identity-heading-icon { overflow: hidden; }
+:root {
+  --background: #edf5ff;
+  --panel-fill: linear-gradient(145deg, rgba(255,255,255,.93), rgba(223,236,254,.75));
+}
+body::before {
+  background: radial-gradient(ellipse 63% 47% at 79% 0%, rgba(64,104,173,.24), transparent 74%),
+   radial-gradient(ellipse 54% 65% at 10% 95%,rgba(85,146,227,.21),transparent 80%),
+   radial-gradient(ellipse 35% 42% at 104% 65%,rgba(48,101,181,.13),transparent 75%),
+   linear-gradient(135deg,#f7fbff 0%,#e7f1ff 56%,#e3efff 100%);
+}
+.system-metrics {
+  background: linear-gradient(125deg,rgba(221,235,255,.97),rgba(243,249,255,.96) 46%,rgba(208,226,250,.87));
+  border-color: rgba(64,104,173,.24);
+}
+.workspace-toolbar { background: linear-gradient(112deg,rgba(213,231,255,.94),rgba(246,250,255,.92)); }
+.map-filter-row { background: rgba(214,232,255,.65); }
+.workspace-caption { background: #e6f0fe; }
+.tabs-list { background: rgba(64,104,173,.15); }
+.instrument-dock, .device-sensors { background: linear-gradient(145deg,rgba(224,238,255,.95),rgba(250,252,255,.96)); }
+.sidebar { background: linear-gradient(157deg,#5981c0 0%,#4068ad 48%,#274d91 100%); }
+.module-launchers { background: linear-gradient(110deg,rgba(230,241,255,.98),rgba(250,253,255,.96)); }
+.module-launchers > button:nth-child(even) { background: rgba(64,104,173,.045); }
+.module-launchers > button:hover { background: rgba(64,104,173,.13); }
+@media(max-width:600px){.brand-image-frame { width: 206px; }.brand-image-frame img { width: 251px; height:251px; }}
