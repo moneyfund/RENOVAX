@@ -1,0 +1,7 @@
+{
+ "private": true,
+ "name": "renovax-ops",
+ "type": "module",
+ "scripts": {"grant-admin":"node grant-admin.mjs"},
+ "dependencies": {"firebase-admin":"^13.5.0"}
+}

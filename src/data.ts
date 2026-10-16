@@ -7,6 +7,9 @@ import {
   Cpu,
   SlidersHorizontal,
   BookOpen,
+  Network,
+  BellRing,
+  ShieldCheck,
 } from "lucide-react";
 import type { ModuleId, MapPoint, PageId } from "@/types";
 export const MODULES = [
@@ -57,11 +60,17 @@ export const TITLES: Record<PageId, string> = {
   dispositivos: "Sensores y dispositivos",
   bitacora: "Bitácora de operaciones",
   configuracion: "Configuración del sistema",
+  red: "Red de dispositivos",
+  alertas: "Centro de alertas",
+  admin: "Administración RENOVAX",
 };
 export const NAV = [
   { id: "resumen", title: "Centro de control", icon: PanelsTopLeft },
   ...MODULES,
   { id: "dispositivos", title: "Dispositivos", icon: Cpu },
+  { id: "red", title: "Mi red", icon: Network },
+  { id: "alertas", title: "Alertas", icon: BellRing },
+  { id: "admin", title: "Admin RENOVAX", icon: ShieldCheck },
   { id: "bitacora", title: "Bitácora", icon: BookOpen },
   { id: "configuracion", title: "Configuración", icon: SlidersHorizontal },
 ] as const;

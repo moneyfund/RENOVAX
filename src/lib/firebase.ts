@@ -36,7 +36,7 @@ async function initialize() {
   };
 }
 let client: ReturnType<typeof initialize> | undefined;
-const getClient = () =>
+export const getClient = () =>
   (client ??= initialize().catch((error) => {
     client = undefined;
     throw error;

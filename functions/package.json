@@ -1,0 +1,9 @@
+{
+ "private": true, "name": "renovax-functions", "version": "0.1.0",
+ "type": "module", "main": "index.mjs",
+ "engines": {"node":"22"},
+ "dependencies": {
+   "firebase-admin": "^13.5.0",
+   "firebase-functions": "^6.4.0"
+ }
+}

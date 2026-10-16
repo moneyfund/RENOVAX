@@ -47,6 +47,180 @@ service cloud.firestore {
         ));
       allow update: if false;
     }
+    // Organizations are tenants. Privileges ALWAYS come from Firestore membership
+    // or a trusted Firebase Admin SDK custom claim, never from local UI state.
+    function platformAdmin() { return signedIn() && request.auth.token.platformAdmin == true; }
+    function orgPath(orgId) { return /databases/$(database)/documents/organizations/$(orgId); }
+    function memberPath(orgId, uid) { return /databases/$(database)/documents/organizations/$(orgId)/members/$(uid); }
+    function isMember(orgId) { return signedIn() && exists(memberPath(orgId, request.auth.uid)); }
+    function isManager(orgId) {
+      return isMember(orgId) && get(memberPath(orgId,request.auth.uid)).data.role in ['owner','admin'];
+    }
+    function isOperator(orgId) {
+      return isMember(orgId) && get(memberPath(orgId,request.auth.uid)).data.role in ['owner','admin','operator'];
+    }
+    function verifiedEmail() { return signedIn() && request.auth.token.email_verified == true; }
+    function positionValid(d) {
+      return d.lat is number && d.lat >= -90 && d.lat <= 90
+        && d.lng is number && d.lng >= -180 && d.lng <= 180
+        && d.accuracy is number && d.accuracy >= 0 && d.accuracy <= 100000;
+    }
+    match /users/{uid} {
+      allow get, list: if signedIn() && (uid == request.auth.uid || platformAdmin());
+      allow create, update, delete: if false;
+      match /orgRefs/{orgId} {
+        allow get, list: if signedIn() && uid == request.auth.uid;
+        allow create, update: if signedIn() && uid == request.auth.uid
+          && existsAfter(memberPath(orgId, uid))
+          && request.resource.data.keys().hasOnly(['id','name','role'])
+          && request.resource.data.id == orgId
+          && request.resource.data.role == getAfter(memberPath(orgId, uid)).data.role
+          && request.resource.data.name is string
+          && request.resource.data.name.size() <= 80;
+        allow delete: if signedIn() && uid == request.auth.uid;
+      }
+      // Used for personal, opt-in geographic subscriptions, not continuous tracking.
+      match /watchZones/{zoneId} {
+        allow read, delete: if signedIn() && uid == request.auth.uid;
+        allow create, update: if signedIn() && uid == request.auth.uid
+          && request.resource.data.keys().hasOnly(['name','lat','lng','radiusKm','enabled','createdAt'])
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
+          && request.resource.data.lat is number && request.resource.data.lat >= -90 && request.resource.data.lat <= 90
+          && request.resource.data.lng is number && request.resource.data.lng >= -180 && request.resource.data.lng <= 180
+          && request.resource.data.radiusKm is number && request.resource.data.radiusKm > 0 && request.resource.data.radiusKm <= 100
+          && request.resource.data.enabled is bool
+          && request.resource.data.createdAt == request.time;
+      }
+      match /pushTokens/{tokenId} {
+        // Token registration will be server-attested in a later mobile-notification phase.
+        allow read, write: if false;
+      }
+    }
+    match /organizations/{orgId} {
+      allow get: if platformAdmin() || isMember(orgId);
+      allow list: if platformAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['name','ownerUid','createdAt'])
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 3 && request.resource.data.name.size() <= 80
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+      match /members/{uid} {
+        allow read: if isMember(orgId) || platformAdmin();
+        allow create: if signedIn()
+          && request.resource.data.uid == uid
+          && request.resource.data.email is string
+          && request.resource.data.joinedAt == request.time
+          && (
+            // The initial owner joins atomically with organization creation.
+            (uid == request.auth.uid && getAfter(orgPath(orgId)).data.ownerUid == uid
+              && request.resource.data.role == 'owner'
+              && !('inviteId' in request.resource.data))
+            ||
+            // A recipient can join ONLY in an atomic batch that accepts
+            // an invitation addressed to their verified Google email.
+            (uid == request.auth.uid && verifiedEmail()
+              && request.resource.data.keys().hasOnly(['uid','role','email','inviteId','joinedAt'])
+              && request.resource.data.email == request.auth.token.email
+              && get(orgPath(orgId)).data.ownerUid != uid
+              && exists(/databases/$(database)/documents/organizations/$(orgId)/invitations/$(request.resource.data.inviteId))
+              && get(/databases/$(database)/documents/organizations/$(orgId)/invitations/$(request.resource.data.inviteId)).data.email == request.auth.token.email
+              && get(/databases/$(database)/documents/organizations/$(orgId)/invitations/$(request.resource.data.inviteId)).data.status == 'pending'
+              && getAfter(/databases/$(database)/documents/organizations/$(orgId)/invitations/$(request.resource.data.inviteId)).data.status == 'accepted'
+              && getAfter(/databases/$(database)/documents/organizations/$(orgId)/invitations/$(request.resource.data.inviteId)).data.acceptedBy == uid
+              && request.resource.data.role == get(/databases/$(database)/documents/organizations/$(orgId)/invitations/$(request.resource.data.inviteId)).data.role)
+          );
+        allow update: if false;
+        allow delete: if isManager(orgId) && uid != get(orgPath(orgId)).data.ownerUid;
+      }
+      match /invitations/{inviteId} {
+        allow get: if isManager(orgId) || (verifiedEmail() && resource.data.email == request.auth.token.email);
+        allow list: if isManager(orgId);
+        allow create: if isManager(orgId)
+          && request.resource.data.keys().hasOnly(['email','role','orgName','status','createdBy','createdAt'])
+          && request.resource.data.email is string && request.resource.data.email.size() <= 254
+          && request.resource.data.orgName is string && request.resource.data.orgName.size() > 0 && request.resource.data.orgName.size() <= 80
+          && request.resource.data.role in ['admin','operator','viewer']
+          && request.resource.data.status == 'pending'
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.createdAt == request.time;
+        allow update: if verifiedEmail() && resource.data.email == request.auth.token.email
+          && resource.data.status == 'pending' && request.resource.data.status == 'accepted'
+          && request.resource.data.acceptedBy == request.auth.uid
+          && request.resource.data.acceptedAt == request.time
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','acceptedBy','acceptedAt']);
+        allow delete: if isManager(orgId);
+      }
+      match /assets/{assetId} {
+        allow read: if isMember(orgId);
+        allow create: if isOperator(orgId)
+          && request.resource.data.keys().hasOnly(['name','kind','createdAt'])
+          && request.resource.data.name is string && request.resource.data.name.size() >= 3 && request.resource.data.name.size() <= 80
+          && request.resource.data.kind in ['transporte','ambiental','sismico','seguridad']
+          && request.resource.data.createdAt == request.time;
+        allow update, delete: if isManager(orgId);
+      }
+      match /nodes/{nodeId} {
+        allow read: if isMember(orgId);
+        allow create: if isManager(orgId)
+          && request.resource.data.keys().hasOnly(['serial','name','kind','assetId','emitterUid','status','createdAt','updatedAt'])
+          && request.resource.data.serial.matches('RVX-(TR|RI|SI|SE)-[A-F0-9]{12}')
+          && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
+          && request.resource.data.kind in ['transporte','ambiental','sismico','seguridad']
+          && request.resource.data.assetId is string
+          && exists(/databases/$(database)/documents/organizations/$(orgId)/assets/$(request.resource.data.assetId))
+          && request.resource.data.emitterUid is string
+          && exists(memberPath(orgId,request.resource.data.emitterUid))
+          && request.resource.data.status == 'offline'
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.updatedAt == request.time;
+        allow update: if (
+          isManager(orgId)
+          || (isOperator(orgId) && resource.data.emitterUid == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lat','lng','accuracy','status','updatedAt']))
+          ) && request.resource.data.serial == resource.data.serial
+          && request.resource.data.assetId == resource.data.assetId
+          && request.resource.data.kind == resource.data.kind
+          && request.resource.data.status in ['online','offline']
+          && request.resource.data.updatedAt == request.time
+          && (request.resource.data.status == 'offline' || positionValid(request.resource.data));
+        allow delete: if isManager(orgId);
+      }
+      match /readings/{readingId} {
+        allow read: if isMember(orgId);
+        allow create: if isOperator(orgId)
+          && request.resource.data.keys().hasOnly(['deviceId','kind','value','unit','note','origin','createdAt'])
+          && request.resource.data.deviceId is string
+          && exists(/databases/$(database)/documents/organizations/$(orgId)/nodes/$(request.resource.data.deviceId))
+          && request.resource.data.kind == get(/databases/$(database)/documents/organizations/$(orgId)/nodes/$(request.resource.data.deviceId)).data.kind
+          && request.resource.data.value is number && request.resource.data.value >= 0 && request.resource.data.value <= 100000
+          && request.resource.data.unit in ['m','cm','mm','m/s2','km/h','unidad']
+          && request.resource.data.note is string && request.resource.data.note.size() <= 240
+          && request.resource.data.origin == 'manual'
+          && request.resource.data.createdAt == request.time;
+        allow update, delete: if false;
+      }
+      match /events/{eventId} {
+        allow read: if isMember(orgId);
+        allow create: if isOperator(orgId)
+          && request.resource.data.keys().hasOnly(['title','kind','severity','status','createdBy','createdAt'])
+          && request.resource.data.title is string && request.resource.data.title.size() >= 8 && request.resource.data.title.size() <= 140
+          && request.resource.data.kind in ['ambiental','sismico','transporte','seguridad']
+          && request.resource.data.severity in ['informativo','revision']
+          && request.resource.data.status == 'draft'
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.createdAt == request.time;
+        allow update, delete: if false;
+      }
+    }
+    // Verified PUBLIC bulletins can only originate from a trusted server.
+    match /publicIncidents/{incidentId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    // A fallback deny also protects all future collections until explicitly reviewed.
     match /{document=**} { allow read, write: if false; }
   }
 }

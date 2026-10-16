@@ -51,6 +51,9 @@ import { usePWA } from "@/hooks/usePWA";
 import type { PageId } from "@/types";
 const Devices = lazy(() => import("@/pages/Devices"));
 const Settings = lazy(() => import("@/pages/Settings"));
+const NetworkPage = lazy(() => import("@/pages/Network"));
+const AlertsPage = lazy(() => import("@/pages/Alerts"));
+const AdminPage = lazy(() => import("@/pages/Admin");
 type ThemeMode = "dark" | "light";
 function initialTheme(): ThemeMode {
   try {
@@ -357,6 +360,12 @@ export default function App() {
                         <Devices workspace={workspace} sensors={sensors} />
                       ) : page === "configuracion" ? (
                         <Settings workspace={workspace} pwa={pwa} />
+                      ) : page === "red" ? (
+                        <NetworkPage workspace={workspace} sensors={sensors} notify={notify} />
+                      ) : page === "alertas" ? (
+                        <AlertsPage workspace={workspace} notify={notify} />
+                      ) : page === "admin" ? (
+                        <AdminPage workspace={workspace} />
                       ) : (
                         <>
                           <div className="page-heading">

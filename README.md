@@ -161,3 +161,11 @@ El inicio muestra exclusivamente el logotipo oficial cargado por el propietario 
 ### Logo sin emblema y selector de apariencia
 
 La navegación y el hero usan el mismo **wordmark oficial de RENOVAX** del PNG original, recortado de forma vectorial mediante SVG `viewBox` para ocultar solo el emblema «R». La X final no se corta y el logotipo conserva su proporción a cualquier tamaño. El favicon conserva la R histórica de la marca. Se añade selector accesible en la barra superior con persistencia local (`renovax-theme`), modo oscuro grafito/rojo eléctrico de inicio y modo claro azul/blanco a voluntad. Se cambia la apariencia mediante CSS; Firebase, GPS, telemetría y permisos quedan intactos.
+
+## RENOVAX Network — organizaciones, nodos y alertas
+
+La aplicación incorpora **Mi red** para crear organizaciones, activos (autobús, estación de río, punto sísmico experimental, cámara), números de serie e invitaciones por enlace vinculadas a cuentas Google. Un propietario puede gestionar el emisor de una unidad, supervisar su posición desde otra cuenta autorizada y registrar lecturas o incidencias. El emisor web solo funciona en primer plano; para la pantalla apagada se necesita una aplicación nativa o un rastreador especializado.
+
+La consola **Admin RENOVAX** exige `platformAdmin=true` en los *custom claims* del token de Firebase, otorgado solo mediante Admin SDK confiable. Nadie puede darse ese privilegio en la web. **Centro de alertas** recibe eventos privados de la organización y distingue sucesos públicos confirmados. Las alertas públicas son de lectura únicamente y deben ser publicadas por un proceso servidor validado; ningún sensor o usuario puede emitir mensajes públicos masivos. Las notificaciones push masivas, la ingesta firmada desde hardware y la calibración/validación de sensores son fases de backend pendientes, no funciones activas de la PWA.
+
+La actualización requiere **publicar las nuevas reglas de Firestore** y sus índices (además de los archivos del frontend). Sin ese despliegue Firebase, las pantallas nuevas indicarán permisos insuficientes. Usa `firebase deploy --only firestore --project renovax-5fbf0` desde una cuenta propietaria de Firebase. Se mantienen compatibilidad y reglas de las colecciones existentes `devices` y `observations`.

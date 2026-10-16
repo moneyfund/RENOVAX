@@ -1,0 +1,69 @@
+
+/* RENOVAX NETWORK v0.4 — administrative & user-operated IoT surfaces */
+.network-page { display:flex; flex-direction:column; gap:19px; }
+.network-page .page-heading { margin-bottom:7px; }
+.network-card {
+  padding:clamp(19px,2.7vw,30px);
+  border:1px solid var(--border-lit);
+  border-radius:18px; color:var(--foreground);
+  background:var(--panel-fill);
+  box-shadow:var(--panel-shadow);
+}
+.network-card h2 { font-size:17px; font-weight:630; letter-spacing:-.025em; color:var(--foreground); margin:0 0 6px; }
+.network-card h3 { font-size:13px; font-weight:620; color:var(--foreground); margin:6px 0; }
+.network-card p { font-size:12px; color:var(--muted); line-height:1.65; max-width:880px; }
+.network-card strong { color:var(--foreground); }
+.network-heading { display:flex; gap:13px; align-items:flex-start; margin-bottom:19px; }
+.network-heading > svg { color:var(--primary); flex-shrink:0; margin-top:3px; width:23px; }
+.network-heading > div { flex:1; min-width:0; }
+.network-heading > .rvx-button { flex-shrink:0; }
+.network-actions, .network-form-row { display:flex; gap:13px; flex-wrap:wrap; align-items:flex-end; }
+.network-actions > label, .network-actions > form { flex:1 1 250px; min-width:0; }
+.network-actions form, .network-form-row { display:flex; align-items:flex-end; gap:11px; }
+.network-form-row { margin:15px 0 21px; }
+.network-form-row > label { flex:1 1 175px; min-width:135px; }
+.network-card label { display:flex; flex-direction:column; gap:7px; font-size:11px; font-weight:560; color:var(--muted); }
+.network-card input, .network-card select {
+  box-sizing:border-box; width:100%; min-width:0; height:41px; padding:0 12px;
+  color:var(--foreground); border-radius:10px;
+  border:1px solid var(--border-lit);
+  background:var(--surface);
+  outline:none; font-size:12px;
+}
+.network-card input:focus, .network-card select:focus { border-color:var(--primary); box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 14%,transparent); }
+.network-card input::placeholder { color:var(--faint); }
+.network-card select option { background:var(--surface); color:var(--foreground); }
+.network-quickstats { display:flex; gap:12px; flex-wrap:wrap; }
+.network-quickstats > span { display:flex; align-items:center; gap:8px; border:1px solid var(--border-lit); background:var(--panel-fill); border-radius:11px; padding:12px 15px; font-size:11px; color:var(--foreground); }
+.network-quickstats svg { width:15px; height:15px; color:var(--primary); }
+.network-list { display:flex; flex-direction:column; gap:8px; margin-top:14px; }
+.network-device { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px 17px; border:1px solid var(--border); border-radius:12px; background:color-mix(in srgb,var(--primary) 5%,transparent); }
+.network-device > div { min-width:0; display:flex; flex-direction:column; gap:4px; }
+.network-device small, .network-members small { font-size:10px; color:var(--muted); word-break:break-word; }
+.network-device .rvx-button { align-self:end; margin-top:6px; }
+.network-members { margin-top:19px; display:flex; flex-direction:column; gap:9px; }
+.network-members > div { display:flex; gap:11px; justify-content:space-between; flex-wrap:wrap; align-items:center; padding:9px 10px; border-bottom:1px solid var(--border); }
+.network-members b { font-size:11px; font-weight:560; color:var(--foreground); }
+.network-copy { display:flex; gap:9px; margin-top:14px; align-items:center; }
+.network-copy input { flex:1; font-family:var(--mono); font-size:10px; }
+.network-muted { font-size:11px; color:var(--muted); margin:15px 0 0; }
+.network-disclaimer { display:flex; gap:17px; background:linear-gradient(125deg,color-mix(in srgb,var(--primary) 9%,var(--surface)),var(--panel-fill)); }
+.network-disclaimer > svg { width:23px; height:23px; flex-shrink:0; color:var(--primary); }
+.network-disclaimer > div { min-width:0; }
+.network-disclaimer code { font-size:11px; padding:4px 7px; color:var(--primary); word-break:break-all; }
+.network-map { position:relative; height:350px; border:1px solid var(--border); border-radius:13px; overflow:hidden; }
+.network-map .geo-map { height:100%; width:100%; min-height:350px; }
+.network-error { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:13px 17px; border-radius:11px; background:rgba(232,56,85,.12); border:1px solid rgba(232,56,85,.35); color:var(--foreground); font-size:12px; }
+.network-error button { border:0; background:transparent; color:var(--foreground); cursor:pointer; font-size:18px; }
+@media(max-width:760px) {
+ .network-page { gap:14px; }
+ .network-card { padding:16px; border-radius:14px; }
+ .network-heading h2 { font-size:15px; }
+ .network-actions form, .network-form-row { flex-wrap:wrap; width:100%; align-items:stretch; }
+ .network-actions form > label,.network-form-row > label { flex:1 1 100%; }
+ .network-form-row > .rvx-button { width:100%; }
+ .network-device { align-items:flex-start; flex-direction:column; }
+ .network-map,.network-map .geo-map { height:290px; min-height:290px; }
+ .network-copy { flex-wrap:wrap; }
+ .network-copy button { width:100%; }
+}

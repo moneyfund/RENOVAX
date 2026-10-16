@@ -1,6 +1,6 @@
 export type ModuleId = "ambiental" | "sismico" | "transporte" | "seguridad";
 export type PageId =
-  "resumen" | ModuleId | "dispositivos" | "bitacora" | "configuracion";
+  "resumen" | ModuleId | "dispositivos" | "bitacora" | "configuracion" | "red" | "alertas" | "admin";
 export type SensorStatus =
   | "inactive"
   | "requesting"
