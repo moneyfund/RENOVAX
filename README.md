@@ -81,3 +81,19 @@ firestore.rules             reglas iniciales privadas por usuario
 ## Despliegue Vercel
 
 Vincular el repositorio con Vercel usando el framework **Vite**, comando `npm run build` y salida `dist`. Un único push a `main` desencadena el despliegue automático. Usar variables de entorno para Firebase; **no almacenar secretos ni cuentas de servicio dentro de Vite**.
+
+## Activar conexión real con Firebase en Vercel
+
+RENOVAX arranca en **modo local** si faltan variables de Firebase. Para conectar datos reales añade en **Vercel → Project → Settings → Environment Variables** las seis claves `VITE_FIREBASE_*` descritas en `.env.example`. Son parámetros públicos del SDK web, **no** la clave privada de una cuenta de servicio. Configura Firebase Authentication (Google), agrega el dominio de producción a los autorizados y habilita Firestore en modo producción.
+
+Para instalar reglas iniciales y la definición de índices después de seleccionar el proyecto Firebase:
+
+```bash
+npx firebase-tools login
+npx firebase-tools use --add
+npx firebase-tools deploy --only firestore
+```
+
+La configuración real y la publicación de reglas en Firebase requieren el ID/configuración del proyecto y permisos de su propietario. Ningún teléfono ni sensor escribe automáticamente sin autenticación y autorización expresa.
+
+**Ciclo de vida GPS:** al detener la transmisión RENOVAX marca el nodo como `offline`. Si se pierde GPS o pasan más de 60 s sin posición, la transmisión se suspende; el mapa solo enseña nodos con actualización reciente, no estados antiguos interpretados como activos.
