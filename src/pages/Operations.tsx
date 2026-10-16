@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { m } from "motion/react";
+import { Wordmark } from "@/components/Wordmark";
 import {
   ArrowUpRight,
   ArrowRight,
@@ -49,7 +50,7 @@ export function Overview({
       >
         <div className="hero-brand-content">
           <div className="hero-brand-image">
-            <img src="/renovax-logo.png" alt="RENOVAX" decoding="async" />
+            <Wordmark className="hero-wordmark" />
           </div>
           <p>Una nueva vida para la tecnología.</p>
         </div>

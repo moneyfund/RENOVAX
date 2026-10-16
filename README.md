@@ -157,3 +157,7 @@ El GPS ya no se cancela por permanecer inmóvil: el servicio `watchPosition` sig
 ### Hero principal simplificado
 
 El inicio muestra exclusivamente el logotipo oficial cargado por el propietario (`/renovax-logo.png`) y la frase **«Una nueva vida para la tecnología.»** dentro de una superficie azul #4068AD con iluminación ambiental, profundidad y contraste alto. Se eliminan del hero el encabezado genérico, las leyendas, los botones y la ilustración de circuito anterior. Las acciones de registro y navegación siguen accesibles en los módulos, bitácora y menú. Responsive para móviles y escritorio; movimiento reducido respetado.
+
+### Logo sin emblema y selector de apariencia
+
+La navegación y el hero usan el mismo **wordmark oficial de RENOVAX** del PNG original, recortado de forma vectorial mediante SVG `viewBox` para ocultar solo el emblema «R». La X final no se corta y el logotipo conserva su proporción a cualquier tamaño. El favicon conserva la R histórica de la marca. Se añade selector accesible en la barra superior con persistencia local (`renovax-theme`), modo oscuro grafito/rojo eléctrico de inicio y modo claro azul/blanco a voluntad. Se cambia la apariencia mediante CSS; Firebase, GPS, telemetría y permisos quedan intactos.

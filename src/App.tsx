@@ -27,6 +27,8 @@ import {
   WifiOff,
   ArrowRight,
   Layers2,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { Brand } from "@/components/Brand";
 import { GoogleMark } from "@/components/GoogleMark";
@@ -49,6 +51,14 @@ import { usePWA } from "@/hooks/usePWA";
 import type { PageId } from "@/types";
 const Devices = lazy(() => import("@/pages/Devices"));
 const Settings = lazy(() => import("@/pages/Settings"));
+type ThemeMode = "dark" | "light";
+function initialTheme(): ThemeMode {
+  try {
+    return localStorage.getItem("renovax-theme") === "light" ? "light" : "dark";
+  } catch {
+    return "dark";
+  }
+}
 function Clock() {
   const [date, setDate] = useState(new Date());
   useEffect(() => {
@@ -98,6 +108,7 @@ function Navigation({
   );
 }
 export default function App() {
+  const [theme, setTheme] = useState<ThemeMode>(initialTheme);
   const [page, setPage] = useState<PageId>(getPage),
     [navOpen, setNavOpen] = useState(false),
     [commandOpen, setCommandOpen] = useState(false),
@@ -115,6 +126,16 @@ export default function App() {
     toastTimer.current = setTimeout(() => setToast(""), 6500);
   }, []);
   useEffect(() => () => clearTimeout(toastTimer.current), []);
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute(
+      "content", theme === "dark" ? "#1b1c22" : "#4068ad",
+    );
+    try { localStorage.setItem("renovax-theme", theme); } catch {
+      // Reading and toggling the theme must also work in private browsing.
+    }
+  }, [theme]);
   const sensors = useSensors(),
     workspace = useWorkspace(sensors, notify),
     pwa = usePWA(notify);
@@ -238,6 +259,18 @@ export default function App() {
                   <span>{TITLES[page]}</span>
                 </div>
                 <div className="topbar-actions">
+                  <button
+                    type="button"
+                    className="theme-toggle"
+                    role="switch"
+                    aria-label="Modo oscuro"
+                    aria-checked={theme === "dark"}
+                    title={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+                    onClick={() => setTheme((t) => t === "dark" ? "light" : "dark")}
+                  >
+                    {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+                    <span>{theme === "dark" ? "Claro" : "Oscuro"}</span>
+                  </button>
                   <button
                     className="command-trigger"
                     aria-label="Buscar módulo"
