@@ -235,11 +235,13 @@ export default function App() {
                 <div className="topbar-actions">
                   <button
                     className="command-trigger"
+                    aria-label="Buscar módulo"
+                    aria-keyshortcuts="Control+k Meta+k"
                     onClick={() => setCommandOpen(true)}
                   >
                     <Search size={14} />
-                    <span>Ir a…</span>
-                    <kbd>⌘ K</kbd>
+                    <span>Buscar módulo</span>
+                    <kbd>Ctrl K</kbd>
                   </button>
                   <Clock />
                   <Tooltip label="Estado del sistema">
@@ -336,7 +338,7 @@ export default function App() {
                 <footer className="system-footer">
                   <span>
                     <span className="footer-mark">R/X</span>RENOVAX OS{" "}
-                    <span className="footer-dot">·</span>v0.2
+                    <span className="footer-dot">·</span>v0.3
                   </span>
                   <span>
                     ENTORNO EXPERIMENTAL<span className="footer-dot">/</span>

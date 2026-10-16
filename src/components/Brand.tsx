@@ -8,7 +8,7 @@ export function Brand({ compact = false }: { compact?: boolean }) {
       {!compact && (
         <span>
           RENOVAX<span className="brand-os">OS</span>
-          <small>RECLAIMED. REIMAGINED.</small>
+          <small>TECNOLOGÍA CON PROPÓSITO</small>
         </span>
       )}
     </div>

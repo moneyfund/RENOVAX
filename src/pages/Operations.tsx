@@ -7,6 +7,10 @@ import {
   LockKeyhole,
   Cpu,
   CircleDot,
+  ShieldCheck,
+  Network,
+  BookOpen,
+  Layers2,
 } from "lucide-react";
 import type { ModuleId, PageId } from "@/types";
 import type { Sensors } from "@/hooks/useSensors";
@@ -15,6 +19,7 @@ import { MODULES } from "@/data";
 import { MapWorkspace } from "@/components/MapWorkspace";
 import { SensorReadout } from "@/components/SensorReadout";
 import { SignalPlot } from "@/components/SignalPlot";
+import { SystemSignature } from "@/components/SystemSignature";
 import { ObservationList } from "@/components/ObservationList";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,35 +35,44 @@ export function Overview({
   navigate: (p: PageId) => void;
   onNew: () => void;
 }) {
+  const activeSensors =
+    Number(sensors.gpsStatus === "active") +
+    Number(sensors.motionStatus === "active");
   return (
     <>
       <div className="overview-heading">
-        <div>
-          <span className="micro purple">SEGUNDA VIDA. NUEVA MISIÓN.</span>
+        <div className="overview-intro">
+          <span className="eyebrow">
+            <span /> INTELIGENCIA EN CADA CONEXIÓN
+          </span>
           <h1>
-            Todo conectado.
-            <br />
-            <span>Todo bajo tu control.</span>
+            Centro de control<span className="heading-period">.</span>
           </h1>
           <p>
-            Tu centro de operaciones para transformar dispositivos en
-            posibilidades.
+            Una nueva vida para la tecnología. Una nueva forma de observar tu entorno.
           </p>
+          <div className="heading-actions">
+            <Button onClick={onNew}>
+              <Plus />Nueva observación
+            </Button>
+            <Button variant="ghost" onClick={() => navigate("dispositivos")}>
+              Explorar dispositivos<ArrowUpRight />
+            </Button>
+          </div>
         </div>
-        <Button onClick={onNew}>
-          <Plus />
-          Nueva observación
-        </Button>
+        <SystemSignature />
       </div>
-      <div className="system-metrics">
+      <section className="system-metrics" aria-label="Resumen de operaciones">
         <div>
-          <span className="micro">MÓDULOS OPERATIVOS</span>
-          <strong>
-            04<small>dominios de exploración</small>
-          </strong>
+          <span className="metric-label">
+            <Layers2 />Módulos operativos
+          </span>
+          <strong>04<small>listos para explorar</small></strong>
         </div>
         <div>
-          <span className="micro">NODOS TRANSMITIENDO</span>
+          <span className="metric-label">
+            <Network />Nodos transmitiendo
+          </span>
           <strong>
             {String(workspace.liveDevices.length).padStart(2, "0")}
             <small>
@@ -67,14 +81,18 @@ export function Overview({
           </strong>
         </div>
         <div>
-          <span className="micro">OBSERVACIONES</span>
+          <span className="metric-label">
+            <BookOpen />Observaciones
+          </span>
           <strong>
             {String(workspace.observations.length).padStart(2, "0")}
             <small>registros de campo</small>
           </strong>
         </div>
         <div>
-          <span className="micro">MODO DE OPERACIÓN</span>
+          <span className="metric-label">
+            <ShieldCheck />Espacio de trabajo
+          </span>
           <strong className="metric-word">
             <i
               className={
@@ -93,17 +111,27 @@ export function Overview({
             </small>
           </strong>
         </div>
+      </section>
+      <div className="operations-heading">
+        <div>
+          <span className="section-index">01</span>
+          <h2>Vista de operaciones</h2>
+        </div>
+        <span className="session-label">
+          <span className="status-dot" />
+          {workspace.online ? "Red disponible" : "Sin conexión"}
+        </span>
       </div>
-      <div className="operations-layout">
+      <div className="operations-layout overview-operations">
         <MapWorkspace workspace={workspace} sensors={sensors} />
         <aside className="instrument-dock">
           <div className="dock-heading">
             <span className="micro">ESTACIÓN LOCAL</span>
-            <Cpu size={17} />
+            <span className="station-tag">RVX / 01</span>
           </div>
           <div className="station-ident">
             <div className="station-symbol">
-              <Cpu size={30} strokeWidth={1} />
+              <Cpu size={26} strokeWidth={1.3} />
             </div>
             <div>
               <h2>Este dispositivo</h2>
@@ -114,13 +142,12 @@ export function Overview({
           </div>
           <div className="dock-status">
             <CircleDot size={12} />
-            Sensores bajo demanda
+            {activeSensors
+              ? `${activeSensors} ${activeSensors === 1 ? "sensor activo" : "sensores activos"}`
+              : "Sensores en espera"}
           </div>
           <SensorReadout sensors={sensors} compact />
-          <p className="dock-hint">
-            Activa solo lo que necesitas. Tú decides cuándo comienza cada
-            lectura.
-          </p>
+          <p className="dock-hint">Activa un sensor para comenzar una lectura local.</p>
           <Button
             variant="outline"
             className="w-full"
@@ -129,21 +156,41 @@ export function Overview({
             Abrir laboratorio
             <ArrowUpRight />
           </Button>
+          <div className="station-privacy">
+            <LockKeyhole size={12} />Permisos bajo tu control
+          </div>
         </aside>
       </div>
-      <div className="module-launchers">
-        {MODULES.map((m, i) => (
-          <button key={m.id} onClick={() => navigate(m.id)}>
-            <span className="micro">
-              0{i + 1} / {m.code}
-            </span>
-            <m.icon size={21} strokeWidth={1.4} />
-            <strong>{m.title}</strong>
-            <span>{m.capability}</span>
-            <ArrowUpRight className="launcher-arrow" size={16} />
-          </button>
-        ))}
-      </div>
+      <section className="modules-section" aria-label="Módulos operativos">
+        <div className="operations-heading">
+          <div>
+            <span className="section-index">02</span>
+            <h2>Elige tu próxima misión</h2>
+          </div>
+          <span className="micro">CUATRO FORMAS DE TRANSFORMAR</span>
+        </div>
+        <div className="module-launchers">
+          {MODULES.map((m, i) => (
+            <button
+              key={m.id}
+              onClick={() => navigate(m.id)}
+              aria-label={`Abrir ${m.title}`}
+            >
+              <span className="launcher-top">
+                <span className="launcher-icon">
+                  <m.icon size={21} strokeWidth={1.5} />
+                </span>
+                <span className="micro">0{i + 1} / {m.code}</span>
+              </span>
+              <span className="launcher-copy">
+                <strong>{m.title}</strong>
+                <span>{m.capability}</span>
+              </span>
+              <ArrowUpRight className="launcher-arrow" size={17} />
+            </button>
+          ))}
+        </div>
+      </section>
       <ObservationList
         records={workspace.observations}
         onMore={() => navigate("bitacora")}

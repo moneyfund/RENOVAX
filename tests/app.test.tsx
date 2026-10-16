@@ -49,7 +49,7 @@ afterEach(cleanup);
 it("opens every operational module and saves a real local observation in the selected module", async () => {
   render(<App />);
   expect(screen.getByRole("heading", { level: 1 }).textContent).toContain(
-    "Todo conectado",
+    "Centro de control",
   );
   const nav = screen.getByRole("navigation", { name: "Navegación principal" });
   for (const name of [

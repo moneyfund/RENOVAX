@@ -171,7 +171,7 @@ export default function Settings({
       </div>
       <div className="version-strip">
         <strong>
-          RENOVAX OS <span>0.2.0</span>
+          RENOVAX OS <span>0.3.0</span>
         </strong>
         <span>React + TypeScript</span>
         <span>Local first · PWA</span>
