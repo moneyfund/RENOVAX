@@ -20,7 +20,6 @@ import { MODULES } from "@/data";
 import { MapWorkspace } from "@/components/MapWorkspace";
 import { SensorReadout } from "@/components/SensorReadout";
 import { SignalPlot } from "@/components/SignalPlot";
-import { SystemSignature } from "@/components/SystemSignature";
 import { ObservationList } from "@/components/ObservationList";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -41,28 +40,20 @@ export function Overview({
     Number(sensors.motionStatus === "active");
   return (
     <>
-      <div className="overview-heading">
-        <div className="overview-intro">
-          <span className="eyebrow">
-            <span /> INTELIGENCIA EN CADA CONEXIÓN
-          </span>
-          <h1>
-            Centro de control<span className="heading-period">.</span>
-          </h1>
-          <p>
-            Una nueva vida para la tecnología. Una nueva forma de observar tu entorno.
-          </p>
-          <div className="heading-actions">
-            <Button onClick={onNew}>
-              <Plus />Nueva observación
-            </Button>
-            <Button variant="ghost" onClick={() => navigate("dispositivos")}>
-              Explorar dispositivos<ArrowUpRight />
-            </Button>
+      <m.section
+        className="overview-heading hero-brand"
+        aria-label="RENOVAX · Una nueva vida para la tecnología"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 210, damping: 28 }}
+      >
+        <div className="hero-brand-content">
+          <div className="hero-brand-image">
+            <img src="/renovax-logo.png" alt="RENOVAX" decoding="async" />
           </div>
+          <p>Una nueva vida para la tecnología.</p>
         </div>
-        <SystemSignature />
-      </div>
+      </m.section>
       <section className="system-metrics" aria-label="Resumen de operaciones">
         <div>
           <span className="metric-label">

@@ -1094,3 +1094,109 @@ body::before {
 .module-launchers > button:nth-child(even) { background: rgba(64,104,173,.045); }
 .module-launchers > button:hover { background: rgba(64,104,173,.13); }
 @media(max-width:600px){.brand-image-frame { width: 206px; }.brand-image-frame img { width: 251px; height:251px; }}
+
+
+/* RENOVAX entry — one official wordmark and one proposition, no extra CTA.
+   A richer blue atmospheric surface replaces the generic page-heading. */
+.overview-heading.hero-brand {
+  isolation: isolate;
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  width: 100%;
+  min-height: 280px;
+  padding: 28px 22px 32px;
+  margin: 0 0 25px;
+  border-radius: 20px;
+  border: 1px solid rgba(31, 78, 149, .20);
+  background:
+    radial-gradient(ellipse 45% 73% at 4% 12%, rgba(189, 215, 255, .43), transparent 88%),
+    radial-gradient(ellipse 48% 105% at 101% 91%, rgba(23, 64, 134, .36), transparent 87%),
+    linear-gradient(118deg, #5f88c7 0%, #4068ad 51%, #2f579c 100%);
+  box-shadow: 0 19px 39px rgba(44, 86, 154, .16),
+              0 4px 10px rgba(44, 86, 154, .07),
+              inset 0 1px 0 rgba(255,255,255,.36);
+}
+.overview-heading.hero-brand::before {
+  content: "";
+  position: absolute;
+  width: 670px;
+  height: 670px;
+  top: -525px;
+  right: -185px;
+  border-radius: 50%;
+  pointer-events: none;
+  border: 1px solid rgba(255,255,255,.24);
+  box-shadow: 0 0 0 66px rgba(255,255,255,.055),
+              0 0 0 136px rgba(255,255,255,.025);
+}
+.overview-heading.hero-brand::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(155deg, rgba(255,255,255,.10), transparent 35%, rgba(5,31,89,.08));
+  pointer-events: none;
+}
+.hero-brand-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 5px;
+  text-align: center;
+}
+.hero-brand-image {
+  width: min(100%, 540px);
+  height: 130px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-brand-image img {
+  position: absolute;
+  display: block;
+  width: min(590px, 85vw);
+  max-width: none;
+  height: auto;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  mix-blend-mode: screen;
+}
+.overview-heading.hero-brand p {
+  max-width: 670px;
+  margin: 0;
+  color: rgba(255,255,255,.95);
+  font-size: clamp(17px, 1.9vw, 23px);
+  line-height: 1.45;
+  font-weight: 450;
+  letter-spacing: -.35px;
+  text-wrap: balance;
+}
+@media (max-width: 760px) {
+  .overview-heading.hero-brand {
+    min-height: 235px;
+    padding: 20px 14px 24px;
+    margin-bottom: 20px;
+    border-radius: 16px;
+  }
+  .hero-brand-image { height: 102px; }
+  .hero-brand-image img { width: min(480px, 112vw); }
+  .overview-heading.hero-brand p {
+    font-size: clamp(15px, 4.2vw, 19px);
+    max-width: 94%;
+  }
+}
+@media (max-width: 430px) {
+  .overview-heading.hero-brand { min-height: 205px; }
+  .hero-brand-image { height: 90px; }
+  .hero-brand-image img { width: min(395px, 110vw); }
+  .overview-heading.hero-brand p { font-size: 15px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .overview-heading.hero-brand,
+  .overview-heading.hero-brand * { animation-duration: .01ms !important; }
+}
