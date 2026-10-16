@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Activity, ArrowUpRight, Building2, ClipboardCopy, Cpu, MapPin, Radio, ShieldCheck, Users, Waves } from "lucide-react";
+import { Activity, Building2, ClipboardCopy, Cpu, MapPin, Radio, ShieldCheck, Users, Waves } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Sensors } from "@/hooks/useSensors";
 import type { Workspace } from "@/hooks/useWorkspace";
