@@ -53,7 +53,7 @@ const Devices = lazy(() => import("@/pages/Devices"));
 const Settings = lazy(() => import("@/pages/Settings"));
 const NetworkPage = lazy(() => import("@/pages/Network"));
 const AlertsPage = lazy(() => import("@/pages/Alerts"));
-const AdminPage = lazy(() => import("@/pages/Admin");
+const AdminPage = lazy(() => import("@/pages/Admin"));
 type ThemeMode = "dark" | "light";
 function initialTheme(): ThemeMode {
   try {
