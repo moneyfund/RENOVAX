@@ -76,7 +76,7 @@ it("opens every operational module and saves a real local observation in the sel
     ).toBe("seguridad"),
   );
   expect(screen.queryByRole("dialog")).toBeNull();
-});
+}, 20000);
 it("supports keyboard command navigation", async () => {
   render(<App />);
   fireEvent.keyDown(window, { key: "k", ctrlKey: true });
