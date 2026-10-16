@@ -1,5 +1,4 @@
 import { getClient } from "./firebase";
-import type { ModuleId } from "@/types";
 
 export type NetworkRole = "owner" | "admin" | "operator" | "viewer";
 export type AssetKind = "transporte" | "ambiental" | "sismico" | "seguridad";
@@ -18,7 +17,7 @@ export interface PublicIncident {
   source: string; status: "verified"; publishedAt?: unknown;
   lat?: number; lng?: number; radiusKm?: number;
 }
-export interface NetworkMember { uid: string; role: NetworkRole; email: string; joinedAt?: unknown; }
+export interface NetworkMember { id: string; uid: string; role: NetworkRole; email: string; joinedAt?: unknown; }
 
 function subscribed<T>(start: () => Promise<() => void>, _onData: (items: T[]) => void, onError: (message: string) => void) {
   let stopped = false; let unsubscribe: () => void = () => {};
