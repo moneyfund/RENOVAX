@@ -124,3 +124,16 @@ Las vistas **Centro de control**, **Ríos y laderas**, **Actividad sísmica**, *
 «Mis datos» muestra únicamente registros de observación que incluyeron ubicación mediante el consentimiento individual «Adjuntar ubicación al registro», y dispositivos GPS recientes privados, restringidos al módulo de movilidad. Los puntos de ejemplo se consultan por separado en «Muestras» y nunca se presentan como mediciones. Los registros anteriores sin GPS permanecen intactos y no aparecen en el mapa hasta que se creen nuevos con coordenadas.
 
 **IMPORTANTE: publicar de nuevo `firestore.rules` en Firebase** tras actualizar: se añadió `position` opcional y validado para guardar registros georreferenciados. Si las reglas anteriores permanecen activas, las observaciones con ubicación no se podrán subir; la aplicación conserva entonces una copia local. Los registros sin ubicación mantienen el formato anterior y siguen siendo válidos.
+
+## Solución: fondo de mapa mostraba `API KEY REQUIRED`
+
+La capa CARTO `dark_all` fue retirada de RENOVAX al exigir clave en las teselas.
+Las opciones **Oscuro** y **Calles** ahora usan cartografía estándar de
+OpenStreetMap con atribución; **Oscuro** aplica el tratamiento grafito/lila
+solamente a las imágenes del mapa mediante CSS y no altera los marcadores.
+**Satélite** emplea Esri World Imagery con su atribución visible.
+
+La cartografía depende de conectividad y de las condiciones de los proveedores.
+No se incluyen claves de terceros. Las teselas no se almacenan en la caché PWA,
+y para una operación comercial de gran escala será necesario contratar un servicio
+con capacidad y términos de uso adecuados.

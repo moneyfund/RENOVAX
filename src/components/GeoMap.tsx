@@ -4,11 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { Crosshair, Minus, Plus, MapPinned } from "lucide-react";
 import type { MapPoint } from "@/types";
 import { Button } from "./ui/button";
-const BASEMAPS = {
-  dark: {url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", options: { attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · <a href="https://carto.com/attributions">CARTO</a>', subdomains: "abcd", maxZoom: 19 }},
-  street: {url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", options: { attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>', maxZoom: 19 }},
-  satellite: {url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", options: { attribution: 'Imagery © <a href="https://www.esri.com">Esri</a> and its data providers', maxZoom: 19 }},
-} as const;
+import { BASEMAPS } from "@/lib/mapTiles";
 const symbols: Record<MapPoint["type"], string> = {
   ambiental: "E",
   sismico: "S",

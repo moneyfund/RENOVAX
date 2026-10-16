@@ -811,3 +811,15 @@ dd { margin: 0; max-width: 70%; overflow-wrap: anywhere; text-align: right; colo
 .geo-checkbox span { display: flex; flex-direction: column; gap: 3px; }
 .geo-checkbox small { color: var(--muted); font-size: 10px; }
 @media(max-width: 680px) { .map-layer-selection { min-width: 104px; } .map-layer-selection .select-trigger { font-size: 10px; } }
+
+/* Basemap oscuro sin tokens: se colorean exclusivamente las teselas OSM;
+   los indicadores GPS/ambientales y controles Leaflet conservan sus colores. */
+.geo-map.layer-dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) grayscale(.67) brightness(.72) contrast(1.14);
+}
+.geo-map.layer-street .leaflet-tile-pane {
+  filter: brightness(.93) saturate(.8) contrast(1.05);
+}
+.geo-map.layer-satellite .leaflet-tile-pane {
+  filter: brightness(.89) saturate(.93) contrast(1.07);
+}
