@@ -1,92 +1,42 @@
-# RENOVAX OS · Mission Control
+# RENOVAX OS · 0.2
 
-**RENOVAX v0.1.0 alpha** — Consola PWA para reutilizar teléfonos reacondicionados como nodos experimentales de observación. Diseño oscuro/lila, mapa geoespacial, interfaces móviles, pruebas de sensores y conexión privada opcional con Firebase.
+Centro de control experimental para dar una nueva misión a teléfonos recuperados. Interfaz grafito/lila con React 19, TypeScript estricto, Tailwind CSS 4, componentes shadcn/ui adaptados sobre Radix UI y Motion. Conserva las cuatro operaciones de la versión anterior y su modelo privado de Firebase.
 
-> **Aviso de seguridad:** Es un prototipo. Los puntos geográficos son **muestras ilustrativas**, no mediciones reales. No puede detectar o predecir terremotos de manera fiable ni reemplazar sistemas oficiales de emergencias. No utilizar para decisiones críticas.
+**Producción:** https://renovax-rho.vercel.app
 
-## Módulos
+## Operaciones
 
-- **Ríos y laderas:** localización de puntos conceptuales y bitácora de observaciones de campo. La estimación de niveles de agua y desplazamientos requerirá cámaras fijas calibradas, algoritmos validados y/o sensores externos.
-- **Actividad sísmica:** acceso, cuando el navegador lo permite, a `DeviceMotionEvent` (aceleración en ejes X/Y/Z); no existe clasificación sísmica ni alerta temprana certificada.
-- **Transporte y GPS:** `navigator.geolocation.watchPosition` con permiso explícito. Con sesión iniciada y autorización adicional, comparte la posición de este dispositivo en Firestore. **Solo primer plano:** el seguimiento se interrumpe o degrada cuando el sistema suspende la PWA.
-- **Seguridad:** visualización y captura *local* de cámara con `getUserMedia`; se pueden guardar observaciones manuales. No hay vigilancia remota ni subida de imagen automática.
+| Módulo            | Función disponible                                                                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Ríos y laderas    | Mapa, referencias demo, observaciones manuales y cámara local.                                                                             |
+| Actividad sísmica | Acelerómetro X/Y/Z, gráfica de las últimas 100 muestras y registro de observaciones. La lectura con gravedad se identifica explícitamente. |
+| Transporte y GPS  | Ubicación local y transmisión privada cada 15 segundos con autorización adicional. Los nodos caducan tras 90 segundos sin actualización.   |
+| Seguridad         | Cámara con permiso, captura y descarga locales. No se graba ni se transmite video automáticamente.                                         |
+
+La consola incluye navegación por URL, paleta **Ctrl/⌘ K**, navegación móvil con foco controlado, bitácora exportable en JSON, laboratorio de sensores y configuración. Los registros locales e identificadores existentes se conservan. Los datos demo se distinguen de los nodos reales mediante un selector independiente.
+
+RENOVAX es una PWA con experiencia de centro de control; no reemplaza Android/iOS ni accede al firmware. Las lecturas son experimentales y no constituyen alertas certificadas de sismos, inundaciones o deslizamientos.
 
 ## Desarrollo
 
-Requiere Node.js 20.19+.
+Node.js **22.12+** (Vercel usa 24.x), npm y el archivo de bloqueo incluido.
 
 ```bash
-npm install
+npm ci
 npm run dev
-npm run build
+npm run verify
 ```
+
+`verify` ejecuta TypeScript estricto, build de producción, pruebas de integración/unidad y validación de la caché generada. `npm run build` produce `dist/`; no se debe publicar un directorio de desarrollo.
 
 ## Firebase (opcional)
 
-1. Crear un proyecto Firebase y una base de datos Cloud Firestore en modo producción.
-2. En **Authentication → Sign-in method**, habilitar Google. Añadir el dominio de Vercel a **Authorized domains**.
-3. Publicar las reglas de `firestore.rules` desde Firebase Console → Firestore Database → Rules. Ajustar reglas y arquitectura antes de cualquier acceso multiusuario compartido.
-4. Copiar `.env.example` a `.env.local` y completar con la **configuración pública** del SDK web de Firebase. En Vercel, establecer las mismas variables `VITE_FIREBASE_*` antes del build.
-5. Abrir Configuración dentro de RENOVAX, iniciar sesión con Google, autorizar el GPS y activar manualmente compartir telemetría en Movilidad.
+Sin variables de entorno, la aplicación funciona en modo local y no inicializa el SDK remoto. No hay claves ni cuentas de servicio incorporadas.
 
-**Modelo de datos actual**
-
-```text
-devices/{ownerUid}_{installationId}
-  ownerUid: string
-  deviceId: string
-  name: string
-  module: "transporte"
-  status: "online" // último estado declarado por el emisor; no implica heartbeat vigente
-  lat, lng, accuracy: number
-  motion: number | null
-  updatedAt: Firestore serverTimestamp
-
-observations/{autoId}
-  ownerUid: string
-  type: "ambiental" | "sismico" | "transporte" | "seguridad"
-  level: "observación" | "revisión" | "prueba"
-  note: string
-  localTime: ISO8601
-  source: "manual"
-  deviceId: string
-  createdAt: Firestore serverTimestamp
-```
-
-Las reglas restringen consultas a documentos propiedad del usuario autenticado. La plataforma no incluye todavía roles administrativos compartidos, organizaciones ni ingestion escalable. La política de retención y consentimiento debe diseñarse para producción.
-
-## Estructura
-
-```text
-src/App.jsx                 consola, navegación y operaciones
-src/components/GeoMap.jsx   mapa Leaflet / Carto / OpenStreetMap
-src/components/SensorConsole.jsx  cámara, GPS, movimiento, altavoz
-src/firebase.js             configuración y operaciones Firestore
-src/data.js                 puntos y módulos DEMO
-src/styles.css              sistema de diseño responsive
-public/manifest.webmanifest PWA instalable
-public/sw.js                cache básico de shell
-firestore.rules             reglas iniciales privadas por usuario
-```
-
-## Limitaciones de plataforma
-
-- Una **PWA no es un sistema operativo**: opera bajo iOS/Android y con los permisos del navegador; no dispone de acceso completo a firmware, sensores de bajo nivel ni ejecución continua garantizada en segundo plano.
-- Para uso continuo, sobre todo GPS, alarmas sonoras, medición sísmica o cámaras, conviene una aplicación Android nativa (agente/kiosco) más adelante, con servicio foreground, políticas de energía y gestión remota, manteniendo esta web como consola.
-- Altavoz: emite una señal de prueba breve con Web Audio solo al presionar el botón. Micrófono: no se solicita.
-- Los mapas requieren conexión para cargar teselas. La PWA cachea únicamente recursos básicos de instalación; no existe todavía modo offline completo.
-- Los puntos de muestra están identificados explícitamente como DEMO; nunca se generan alertas reales sobre ellos.
-- Para alertas por desastre deben incorporarse fuentes oficiales, procesos de calibración, detección robusta, confirmación humana, redundancia y procedimientos de alerta validados.
-
-## Despliegue Vercel
-
-Vincular el repositorio con Vercel usando el framework **Vite**, comando `npm run build` y salida `dist`. Un único push a `main` desencadena el despliegue automático. Usar variables de entorno para Firebase; **no almacenar secretos ni cuentas de servicio dentro de Vite**.
-
-## Activar conexión real con Firebase en Vercel
-
-RENOVAX arranca en **modo local** si faltan variables de Firebase. Para conectar datos reales añade en **Vercel → Project → Settings → Environment Variables** las seis claves `VITE_FIREBASE_*` descritas en `.env.example`. Son parámetros públicos del SDK web, **no** la clave privada de una cuenta de servicio. Configura Firebase Authentication (Google), agrega el dominio de producción a los autorizados y habilita Firestore en modo producción.
-
-Para instalar reglas iniciales y la definición de índices después de seleccionar el proyecto Firebase:
+1. Crea o selecciona el proyecto Firebase y habilita Cloud Firestore en producción.
+2. Habilita Google en Authentication y añade `renovax-rho.vercel.app` a los dominios autorizados.
+3. Añade en Vercel las seis variables públicas `VITE_FIREBASE_*` de `.env.example`. `apiKey`, `authDomain`, `projectId` y `appId` son necesarios para habilitar el enlace. Nunca uses credenciales administrativas en variables `VITE_*`.
+4. Publica las reglas y el índice incluidos, desde Firebase Console o con las herramientas oficiales:
 
 ```bash
 npx firebase-tools login
@@ -94,6 +44,59 @@ npx firebase-tools use --add
 npx firebase-tools deploy --only firestore
 ```
 
-La configuración real y la publicación de reglas en Firebase requieren el ID/configuración del proyecto y permisos de su propietario. Ningún teléfono ni sensor escribe automáticamente sin autenticación y autorización expresa.
+5. Reconstruye la aplicación después de configurar las variables. Desde Configuración, conecta la cuenta y, desde Transporte y GPS, activa el GPS y autoriza la transmisión.
 
-**Ciclo de vida GPS:** al detener la transmisión RENOVAX marca el nodo como `offline`. Si se pierde GPS o pasan más de 60 s sin posición, la transmisión se suspende; el mapa solo enseña nodos con actualización reciente, no estados antiguos interpretados como activos.
+El índice `ownerUid + createdAt` permite cargar las últimas 100 observaciones privadas. Se limita la suscripción de dispositivos a 200 nodos por cuenta. Las reglas validan propiedad, esquema, coordenadas y longitud de registros. La publicación de estas reglas e índices requiere acceso al proyecto Firebase y es independiente del despliegue en Vercel.
+
+```text
+devices/{ownerUid}_{installationId}
+  ownerUid, deviceId, name, module: "transporte", status
+  lat, lng, accuracy, motion, updatedAt: serverTimestamp
+
+observations/{recordId}
+  ownerUid, type, level, note, localTime, source: "manual"
+  deviceId, createdAt: serverTimestamp
+```
+
+Los registros locales se guardan en `renovax-observations` (máximo 100) y conservan el ID de `renovax-install-id`. Si falla una escritura remota se conserva una copia local; la misma ID evita duplicarla en la interfaz cuando llega la confirmación. Las copias creadas con sesión quedan asociadas a esa cuenta y se ocultan al cerrarla. El almacenamiento del navegador no es cifrado: en equipos compartidos se requiere una política de acceso al dispositivo. No se suben automáticamente los registros locales previos.
+
+## Sensores y privacidad
+
+- Ningún permiso se solicita al abrir la consola. GPS, movimiento y cámara se activan mediante controles explícitos.
+- El GPS se descarta tras 60 segundos sin lectura. La señal del acelerómetro se actualiza como máximo a 10 Hz y caduca sin eventos recientes.
+- Al pasar a segundo plano se detienen los sensores y la transmisión. Al cerrar la vista de cámara se liberan todas sus pistas, incluso si el permiso termina de resolverse después.
+- El envío GPS se serializa para que una escritura pendiente no vuelva a dejar el nodo online después de detenerlo. Si no puede escribirse el estado offline, la caducidad de 90 segundos evita presentarlo indefinidamente como activo.
+- El acelerómetro y la compatibilidad con permisos varían según navegador y equipo. El modo de captura continua en segundo plano requeriría un agente nativo.
+
+## PWA y rendimiento
+
+El build genera `dist/sw.js` con una lista versionada de recursos locales: HTML, estilos, fuentes, iconos y módulos JavaScript. Funciona sin conexión tras completar la primera instalación. No intercepta ni guarda respuestas de Firebase, teselas externas o APIs privadas. La activación limpia solo cachés de RENOVAX, preserva otras aplicaciones y ofrece un aviso de actualización.
+
+Fuentes alojadas localmente; mapa, cámara, ajustes y SDK Firebase se cargan por módulos. El paquete Firestore tiene un aviso de tamaño en Vite, pero se importa únicamente con configuración Firebase; no bloquea el arranque local. La PWA precarga esos archivos para disponer de la interfaz offline. No se incluyen analítica, videos decorativos ni fuentes externas.
+
+## Estructura
+
+```text
+src/App.tsx                 shell, navegación y diálogos globales
+src/components/ui/          componentes shadcn/ui adaptados, basados en Radix
+src/components/             mapa, cámara, instrumentos y registros
+src/pages/                  operaciones, dispositivos y configuración
+src/hooks/                  permisos, sincronización y ciclo de vida PWA
+src/lib/                    Firebase, almacenamiento y validación de telemetría
+src/types.ts                contratos TypeScript
+src/styles.css              tokens de diseño y responsive
+scripts/build-sw.mjs        caché versionada a partir del build real
+scripts/verify-build.mjs    verificación de instalación y privacidad de caché
+tests/                      pruebas de comportamiento y regresión
+firestore.rules             reglas privadas y validación del esquema
+```
+
+Se incluyen CSP, protección contra framing, MIME sniffing y política explícita de permisos. `@grpc/grpc-js`, dependencia transitiva de Firebase para Node, se fija en 1.14.5 para excluir versiones vulnerables; no se utiliza como transporte en el navegador.
+
+## Validación y publicación
+
+Las pruebas cubren navegación de los cuatro módulos, paleta de comandos, guardado local, persistencia anterior, datos inválidos, caducidad GPS, permisos de movimiento, rechazo/cierre de cámara y orden de escrituras de telemetría. La verificación del build comprueba recursos offline, iconos, actualización de cachés y exclusión de respuestas privadas.
+
+Los permisos y sensores se simulan en las pruebas. Aún requieren validación física en Android/iOS y una cuenta Firebase configurada. En esta revisión no se dispuso de una superficie autorizada de navegador para QA visual; el responsive se implementó con breakpoints de 480, 760, 1030, 1250 y 1600 px.
+
+Vercel está vinculado a `main`. Publicar un único commit revisado desencadena un único build de producción; no se debe crear además un despliegue manual del mismo commit.

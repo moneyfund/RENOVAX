@@ -1,20 +1,39 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // La primera versión es privada por usuario. No permite acceso público.
+    function signedIn() { return request.auth != null; }
+    function owns(data) { return signedIn() && data.ownerUid == request.auth.uid; }
+    function validDevice(data) {
+      return data.keys().hasAll(['ownerUid','deviceId','name','module','status','lat','lng','accuracy','motion','updatedAt'])
+        && data.keys().hasOnly(['ownerUid','deviceId','name','module','status','lat','lng','accuracy','motion','updatedAt'])
+        && data.deviceId is string && data.deviceId.size() > 0 && data.deviceId.size() <= 80
+        && data.name is string && data.name.size() <= 80
+        && data.module == 'transporte' && data.status in ['online','offline']
+        && data.lat is number && data.lat >= -90 && data.lat <= 90
+        && data.lng is number && data.lng >= -180 && data.lng <= 180
+        && data.accuracy is number && data.accuracy >= 0
+        && (data.motion == null || (data.motion is number && data.motion >= 0))
+        && data.updatedAt == request.time;
+    }
     match /devices/{deviceId} {
-      allow create: if request.auth != null
-        && request.resource.data.ownerUid == request.auth.uid
-        && deviceId.matches('^' + request.auth.uid + '_.*$');
-      allow read, delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
-      allow update: if request.auth != null
-        && resource.data.ownerUid == request.auth.uid
-        && request.resource.data.ownerUid == resource.data.ownerUid;
+      allow read, delete: if owns(resource.data);
+      allow create: if owns(request.resource.data) && validDevice(request.resource.data)
+        && deviceId == request.auth.uid + '_' + request.resource.data.deviceId;
+      allow update: if owns(resource.data) && owns(request.resource.data)
+        && request.resource.data.deviceId == resource.data.deviceId
+        && validDevice(request.resource.data);
     }
     match /observations/{observationId} {
-      allow create: if request.auth != null
-        && request.resource.data.ownerUid == request.auth.uid;
-      allow read, delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+      allow read, delete: if owns(resource.data);
+      allow create: if owns(request.resource.data)
+        && request.resource.data.keys().hasOnly(['ownerUid','type','level','note','localTime','source','deviceId','createdAt'])
+        && request.resource.data.type in ['ambiental','sismico','transporte','seguridad']
+        && request.resource.data.level in ['observación','revisión','prueba']
+        && request.resource.data.note is string && request.resource.data.note.size() > 0 && request.resource.data.note.size() <= 500
+        && request.resource.data.localTime is string && request.resource.data.localTime.size() <= 40
+        && request.resource.data.source == 'manual'
+        && request.resource.data.deviceId is string && request.resource.data.deviceId.size() <= 80
+        && request.resource.data.createdAt == request.time;
       allow update: if false;
     }
     match /{document=**} { allow read, write: if false; }
