@@ -48,9 +48,8 @@ beforeEach(() => {
 afterEach(cleanup);
 it("opens every operational module and saves a real local observation in the selected module", async () => {
   render(<App />);
-  expect(screen.getByRole("heading", { level: 1 }).textContent).toContain(
-    "Centro de control",
-  );
+  expect(screen.getAllByRole("img", { name: "Renovax" }).length).toBeGreaterThan(1);
+  expect(screen.getByText("Una nueva vida para la tecnología.")).toBeTruthy();
   const nav = screen.getByRole("navigation", { name: "Navegación principal" });
   for (const name of [
     "Ríos y laderas",

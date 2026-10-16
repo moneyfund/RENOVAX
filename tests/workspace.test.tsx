@@ -9,6 +9,7 @@ const sdk = vi.hoisted(() => ({
   user: { uid: "user-one", displayName: "Test", email: "test@example.com" },
 }));
 vi.mock("../src/lib/firebase", () => ({
+  firebaseReady: true,
   ...sdk,
   login: vi.fn(),
   logout: vi.fn(),
