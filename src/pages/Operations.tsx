@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState } from "react";
+import { m } from "motion/react";
 import {
   ArrowUpRight,
   ArrowRight,
@@ -170,24 +171,27 @@ export function Overview({
           <span className="micro">CUATRO FORMAS DE TRANSFORMAR</span>
         </div>
         <div className="module-launchers">
-          {MODULES.map((m, i) => (
-            <button
-              key={m.id}
-              onClick={() => navigate(m.id)}
-              aria-label={`Abrir ${m.title}`}
+          {MODULES.map((module, i) => (
+            <m.button
+              key={module.id}
+              onClick={() => navigate(module.id)}
+              aria-label={`Abrir ${module.title}`}
+              whileHover={{ y: -4 }}
+              whileTap={{ scale: 0.985 }}
+              transition={{ type: "spring", stiffness: 340, damping: 30 }}
             >
               <span className="launcher-top">
                 <span className="launcher-icon">
-                  <m.icon size={21} strokeWidth={1.5} />
+                  <module.icon size={21} strokeWidth={1.5} />
                 </span>
-                <span className="micro">0{i + 1} / {m.code}</span>
+                <span className="micro">0{i + 1} / {module.code}</span>
               </span>
               <span className="launcher-copy">
-                <strong>{m.title}</strong>
-                <span>{m.capability}</span>
+                <strong>{module.title}</strong>
+                <span>{module.capability}</span>
               </span>
               <ArrowUpRight className="launcher-arrow" size={17} />
-            </button>
+            </m.button>
           ))}
         </div>
       </section>

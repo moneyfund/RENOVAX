@@ -141,3 +141,9 @@ con capacidad y términos de uso adecuados.
 ## Cartografía en colores originales
 
 Se eliminó el oscurecimiento artificial de las teselas (incluyendo el filtro global gris y los filtros de Calles y Satélite). La vista predeterminada ahora es **Calles**, con colores naturales de OpenStreetMap; **Satélite** también se muestra sin filtros. El diseño dark premium de RENOVAX continúa aplicándose a los controles y paneles, no a la cartografía. No hay una opción «Oscuro» en el selector.
+
+## Interfaz RENOVAX · Azul y blanco
+
+Identidad clara **#4068AD** y blanco, con fondo atmosférico azul muy suave, barra lateral azul, paneles semitransparentes y botones de vidrio con contraste accesible. Se elimina el tema negro/lila del shell. La navegación y los módulos mantienen su funcionalidad; no se alteran las reglas de Firebase, permisos GPS ni políticas de Storage.
+
+Animaciones: se conserva **Motion para React** ya incluido, utilizando transiciones físicas moderadas para las secciones y tarjetas de módulos, respetando la preferencia del sistema para reducir movimiento. No se añade otra dependencia porque ya contamos con esta biblioteca y Radix UI. El acceso rápido desde la barra superior y el panel Configuración utilizan la identidad oficial de Google en SVG local; el inicio de sesión continúa utilizando Firebase Authentication.

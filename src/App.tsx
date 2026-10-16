@@ -29,6 +29,8 @@ import {
   Layers2,
 } from "lucide-react";
 import { Brand } from "@/components/Brand";
+import { GoogleMark } from "@/components/GoogleMark";
+import { firebaseReady } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -243,6 +245,18 @@ export default function App() {
                     <span>Buscar módulo</span>
                     <kbd>Ctrl K</kbd>
                   </button>
+                  {!workspace.user && firebaseReady && (
+                    <Button
+                      variant="outline"
+                      className="header-google"
+                      disabled={workspace.authBusy}
+                      onClick={() => void workspace.signIn()}
+                      aria-label="Iniciar sesión con Google"
+                    >
+                      <GoogleMark />
+                      <span>{workspace.authBusy ? "Conectando…" : "Entrar con Google"}</span>
+                    </Button>
+                  )}
                   <Clock />
                   <Tooltip label="Estado del sistema">
                     <Button
@@ -275,10 +289,10 @@ export default function App() {
                 <AnimatePresence mode="wait" initial={false}>
                   <m.div
                     key={page}
-                    initial={{ opacity: 0, y: 5 }}
+                    initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.16 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 30, mass: 0.8 }}
                   >
                     <Suspense
                       fallback={

@@ -1,3 +1,5 @@
+import { m } from "motion/react";
+import { GoogleMark } from "@/components/GoogleMark";
 import {
   Database,
   Download,
@@ -34,7 +36,19 @@ export default function Settings({
           <h2>Identidad y conexión</h2>
           <p>Una cuenta privada para tus registros y dispositivos.</p>
         </div>
-        <section className="settings-section">
+        <m.section
+          className="settings-section identity-panel"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 210, damping: 27 }}
+        >
+          <div className="identity-heading">
+            <span className="identity-heading-icon"><ShieldCheck size={19} /></span>
+            <div>
+              <strong>Acceso seguro a RENOVAX</strong>
+              <small>Tu sesión de Google protege tus datos y dispositivos.</small>
+            </div>
+          </div>
           <div className="settings-status">
             <span className="micro">FIREBASE / FIRESTORE</span>
             <span className="pill">
@@ -83,17 +97,20 @@ export default function Settings({
           )}
           <div className="settings-actions">
             <Button
+              variant="outline"
+              className={workspace.user ? "" : "google-login-button"}
               disabled={!firebaseReady || workspace.authBusy}
               onClick={() =>
                 void (workspace.user ? workspace.signOut() : workspace.signIn())
               }
+              aria-label={workspace.user ? "Cerrar sesión de RENOVAX" : "Iniciar sesión con Google"}
             >
-              {workspace.user ? <LogOut /> : <ShieldCheck />}
+              {workspace.user ? <LogOut /> : <GoogleMark />}
               {workspace.authBusy
                 ? "Conectando…"
                 : workspace.user
                   ? "Cerrar sesión"
-                  : "Conectar con Google"}
+                  : "Continuar con Google"}
             </Button>
             <a
               className="text-link"
@@ -105,7 +122,8 @@ export default function Settings({
               <ArrowUpRight size={14} />
             </a>
           </div>
-        </section>
+          <span className="google-note">Autenticación gestionada por Google y Firebase · sin contraseñas almacenadas en RENOVAX</span>
+        </m.section>
         <div className="settings-label">
           <Download size={21} />
           <h2>Siempre a mano</h2>
